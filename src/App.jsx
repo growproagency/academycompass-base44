@@ -17,7 +17,6 @@ import CalendarPage from './pages/CalendarPage';
 import ArchivePage from './pages/ArchivePage';
 import StrategicOrganizer from './pages/StrategicOrganizer';
 import AdminPanel from './pages/AdminPanel';
-import LoginPage from './pages/LoginPage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -41,7 +40,6 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
       <Route element={<Layout />}>
         <Route path="/" element={<Navigate to="/Dashboard" replace />} />
         <Route path="/Dashboard" element={<Dashboard />} />
