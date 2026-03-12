@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { useAuth } from "@/lib/SupabaseAuthContext";
+import { supabase } from "@/components/lib/supabaseClient";
+import { useAuth } from "@/components/lib/SupabaseAuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   CheckSquare,

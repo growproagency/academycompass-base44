@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/components/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import {
   CalendarDays,

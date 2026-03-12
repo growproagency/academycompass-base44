@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/components/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/lib/SupabaseAuthContext";
+import { useAuth } from "@/components/lib/SupabaseAuthContext";
 import {
   LayoutDashboard,
   Mountain,

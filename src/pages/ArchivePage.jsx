@@ -1,5 +1,5 @@
 import React from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/components/lib/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Archive, RotateCcw, Trash2, Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
