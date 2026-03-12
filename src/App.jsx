@@ -8,6 +8,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 // Page imports
 import Layout from './components/Layout';
+import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Rocks from './pages/Rocks';
 import RockDetail from './pages/RockDetail';
@@ -40,6 +41,7 @@ const AuthenticatedApp = () => {
 
   return (
     <Routes>
+      <Route path="/Login" element={<Login />} />
       <Route element={<Layout />}>
         <Route path="/" element={<Navigate to="/Dashboard" replace />} />
         <Route path="/Dashboard" element={<Dashboard />} />
