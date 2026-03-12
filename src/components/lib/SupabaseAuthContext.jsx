@@ -19,16 +19,9 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        setAuthError({ type: 'auth_required' });
-      } else {
-        setSession(session);
-        setUser(session?.user || null);
-        if (!session) {
-          setAuthError({ type: 'auth_required' });
-        }
-      }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user || null);
       setIsLoadingAuth(false);
     });
 
