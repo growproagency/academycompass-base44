@@ -25,6 +25,9 @@ export const AuthProvider = ({ children }) => {
       } else {
         setSession(session);
         setUser(session?.user || null);
+        if (!session) {
+          setAuthError({ type: 'auth_required' });
+        }
       }
       setIsLoadingAuth(false);
     });
