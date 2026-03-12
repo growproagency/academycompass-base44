@@ -55,7 +55,8 @@ export default function MyTasks() {
     queryKey: ["my-tasks"],
     queryFn: async () => {
       const me = await base44.auth.me();
-      const tasks = await base44.entities.Task.filter({ archived_at: null });
+      const allTasks = await base44.entities.Task.list();
+      const tasks = allTasks.filter((t) => !t.archived_at);
       return tasks.filter((t) => t.created_by === me.email || t.assignee_email === me.email);
     },
   });

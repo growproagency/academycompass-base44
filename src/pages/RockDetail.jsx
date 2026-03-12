@@ -49,7 +49,10 @@ export default function RockDetail() {
 
   const { data: tasks = [] } = useQuery({
     queryKey: ["rock-tasks", rockId],
-    queryFn: () => base44.entities.Task.filter({ rock_id: rockId, archived_at: null }),
+    queryFn: async () => {
+      const all = await base44.entities.Task.filter({ rock_id: rockId });
+      return all.filter((t) => !t.archived_at);
+    },
     enabled: !!rockId,
   });
 

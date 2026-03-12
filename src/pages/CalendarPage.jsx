@@ -40,7 +40,10 @@ export default function CalendarPage() {
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["calendar-tasks"],
-    queryFn: () => base44.entities.Task.filter({ archived_at: null }),
+    queryFn: async () => {
+      const all = await base44.entities.Task.list();
+      return all.filter((t) => !t.archived_at);
+    },
   });
 
   const { data: milestones = [] } = useQuery({
