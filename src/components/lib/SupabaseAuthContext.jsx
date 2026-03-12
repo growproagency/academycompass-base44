@@ -43,8 +43,17 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const navigateToLogin = () => {
-    window.location.href = '/login';
+  const navigateToLogin = async () => {
+    // Redirect to Supabase auth with Google provider
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/Dashboard',
+      },
+    });
+    if (error) {
+      console.error('Error redirecting to login:', error.message);
+    }
   };
 
   return (
