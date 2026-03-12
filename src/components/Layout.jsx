@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/components/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/lib/SupabaseAuthContext";
@@ -40,8 +40,16 @@ const adminItems = [
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const { user: authUser } = useAuth();
+
+  // Redirect to SignIn if not authenticated
+  useEffect(() => {
+    if (!authUser) {
+      navigate('/SignIn');
+    }
+  }, [authUser, navigate]);
 
   const { data: user } = useQuery({
     queryKey: ["currentUser", authUser?.id],
