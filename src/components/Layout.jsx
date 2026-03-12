@@ -42,47 +42,29 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { user: authUser } = useAuth();
-
-  // Redirect to SignIn if not authenticated
-  useEffect(() => {
-    if (!authUser) {
-      navigate('/SignIn');
-    }
-  }, [authUser, navigate]);
-
-  const { data: user } = useQuery({
-    queryKey: ["currentUser", authUser?.id],
-    queryFn: async () => {
-      if (!authUser) return null;
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
-      return data;
-    },
-    enabled: !!authUser,
-  });
+  const { user: authUser, profile } = useAuth();
 
   const { data: tasks } = useQuery({
-    queryKey: ["tasks-overdue-count"],
+    queryKey: ["tasks-overdue-count", profile?.organization_id],
     queryFn: async () => {
+      if (!profile?.organization_id) return [];
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
+        .eq('organization_id', profile.organization_id)
         .eq('status', 'todo');
       return data || [];
     },
     initialData: [],
+    enabled: !!profile?.organization_id,
   });
 
   const overdueCount = tasks.filter(
     (t) => t.due_date && new Date(t.due_date) < new Date() && t.status !== "done"
   ).length;
 
-  const isAdmin = user?.role === "admin";
-  const initials = authUser?.user_metadata?.full_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || "U";
+  const isAdmin = profile?.role === "admin";
+  const initials = profile?.full_name?.charAt(0)?.toUpperCase() || authUser?.email?.charAt(0)?.toUpperCase() || "U";
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -176,7 +158,7 @@ export default function Layout() {
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-sidebar-foreground truncate">
-                {authUser?.user_metadata?.full_name || user?.email || "User"}
+                {profile?.full_name || authUser?.email || "User"}
               </p>
               <p className="text-[11px] text-sidebar-foreground/50 truncate">
                 {authUser?.email || ""}

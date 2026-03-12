@@ -3,12 +3,13 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
-import { AuthProvider, useAuth } from './components/lib/SupabaseAuthContext';
-import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import { AuthProvider } from './components/lib/SupabaseAuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Page imports
 import Layout from './components/Layout';
 import SignIn from './pages/SignIn';
+import AccessPending from './pages/AccessPending';
 import Dashboard from './pages/Dashboard';
 import Rocks from './pages/Rocks';
 import RockDetail from './pages/RockDetail';
@@ -19,21 +20,12 @@ import ArchivePage from './pages/ArchivePage';
 import StrategicOrganizer from './pages/StrategicOrganizer';
 import AdminPanel from './pages/AdminPanel';
 
-const AuthenticatedApp = () => {
-  const { isLoadingAuth } = useAuth();
-
-  if (isLoadingAuth) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-4 border-muted border-t-primary rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
+const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/SignIn" element={<SignIn />} />
-      <Route element={<Layout />}>
+      <Route path="/AccessPending" element={<AccessPending />} />
+      <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route path="/" element={<Navigate to="/Dashboard" replace />} />
         <Route path="/Dashboard" element={<Dashboard />} />
         <Route path="/Rocks" element={<Rocks />} />
@@ -43,7 +35,7 @@ const AuthenticatedApp = () => {
         <Route path="/Calendar" element={<CalendarPage />} />
         <Route path="/ArchivePage" element={<ArchivePage />} />
         <Route path="/StrategicOrganizer" element={<StrategicOrganizer />} />
-        <Route path="/AdminPanel" element={<AdminPanel />} />
+        <Route path="/AdminPanel" element={<ProtectedRoute requireAdmin={true}><AdminPanel /></ProtectedRoute>} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
@@ -55,7 +47,7 @@ function App() {
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
-          <AuthenticatedApp />
+          <AppRoutes />
         </Router>
         <Toaster />
       </QueryClientProvider>
