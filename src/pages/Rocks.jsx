@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -84,10 +84,12 @@ function RockFormDialog({ open, onOpenChange, rock, onSuccess }) {
       rock_status: status,
     };
     if (rock) {
-      await base44.entities.Rock.update(rock.id, data);
+      const { error } = await supabase.from('rocks').update(data).eq('id', rock.id);
+      if (error) throw error;
       toast.success("Rock updated");
     } else {
-      await base44.entities.Rock.create(data);
+      const { error } = await supabase.from('rocks').insert([data]);
+      if (error) throw error;
       toast.success("Rock created");
     }
     queryClient.invalidateQueries({ queryKey: ["rocks"] });
@@ -150,22 +152,32 @@ export default function Rocks() {
 
   const { data: rocks = [], isLoading } = useQuery({
     queryKey: ["rocks"],
-    queryFn: () => base44.entities.Rock.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('rocks').select('*');
+      return data || [];
+    },
   });
 
   const { data: tasks = [] } = useQuery({
     queryKey: ["all-tasks"],
-    queryFn: () => base44.entities.Task.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tasks').select('*');
+      return data || [];
+    },
   });
 
   const { data: milestones = [] } = useQuery({
     queryKey: ["milestones"],
-    queryFn: () => base44.entities.Milestone.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('milestones').select('*');
+      return data || [];
+    },
   });
 
   const handleDelete = async () => {
     if (!deleteRock) return;
-    await base44.entities.Rock.delete(deleteRock.id);
+    const { error } = await supabase.from('rocks').delete().eq('id', deleteRock.id);
+    if (error) throw error;
     toast.success("Rock deleted");
     queryClient.invalidateQueries({ queryKey: ["rocks"] });
     setDeleteRock(null);

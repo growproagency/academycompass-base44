@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Loader2,
@@ -41,7 +41,10 @@ export default function StrategicOrganizer() {
 
   const { data: plans = [], isLoading } = useQuery({
     queryKey: ["strategic-plans"],
-    queryFn: () => base44.entities.StrategicPlan.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('strategic_plans').select('*');
+      return data || [];
+    },
   });
 
   useEffect(() => {
@@ -66,9 +69,11 @@ export default function StrategicOrganizer() {
   const handleSave = async () => {
     setSaving(true);
     if (planId) {
-      await base44.entities.StrategicPlan.update(planId, form);
+      const { error } = await supabase.from('strategic_plans').update(form).eq('id', planId);
+      if (error) throw error;
     } else {
-      await base44.entities.StrategicPlan.create(form);
+      const { error } = await supabase.from('strategic_plans').insert([form]);
+      if (error) throw error;
     }
     queryClient.invalidateQueries({ queryKey: ["strategic-plans"] });
     toast.success("Saved");

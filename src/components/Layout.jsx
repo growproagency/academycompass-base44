@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/lib/SupabaseAuthContext";
 import {
   LayoutDashboard,
   Mountain,
@@ -40,14 +41,31 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
+  const { user: authUser } = useAuth();
+
   const { data: user } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: () => base44.auth.me(),
+    queryKey: ["currentUser", authUser?.id],
+    queryFn: async () => {
+      if (!authUser) return null;
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+      return data;
+    },
+    enabled: !!authUser,
   });
 
   const { data: tasks } = useQuery({
     queryKey: ["tasks-overdue-count"],
-    queryFn: () => base44.entities.Task.filter({ status: "todo" }),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('status', 'todo');
+      return data || [];
+    },
     initialData: [],
   });
 
@@ -56,7 +74,7 @@ export default function Layout() {
   ).length;
 
   const isAdmin = user?.role === "admin";
-  const initials = user?.full_name?.charAt(0)?.toUpperCase() || "U";
+  const initials = authUser?.user_metadata?.full_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || "U";
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -150,14 +168,14 @@ export default function Layout() {
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-sidebar-foreground truncate">
-                {user?.full_name || "User"}
+                {authUser?.user_metadata?.full_name || user?.email || "User"}
               </p>
               <p className="text-[11px] text-sidebar-foreground/50 truncate">
-                {user?.email || ""}
+                {authUser?.email || ""}
               </p>
             </div>
             <button
-              onClick={() => base44.auth.logout()}
+              onClick={() => supabase.auth.signOut()}
               className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
               title="Sign out"
             >

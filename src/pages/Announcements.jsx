@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/lib/SupabaseAuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Megaphone,
@@ -44,15 +45,31 @@ export default function Announcements() {
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
+  const { user: authUser } = useAuth();
 
   const { data: user } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: () => base44.auth.me(),
+    queryKey: ["currentUser", authUser?.id],
+    queryFn: async () => {
+      if (!authUser) return null;
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+      return data;
+    },
+    enabled: !!authUser,
   });
 
   const { data: announcements = [], isLoading } = useQuery({
     queryKey: ["announcements"],
-    queryFn: () => base44.entities.Announcement.list("-created_date"),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('created_date', { ascending: false });
+      return data || [];
+    },
   });
 
   const isAdmin = user?.role === "admin";
@@ -75,10 +92,17 @@ export default function Announcements() {
     if (!title.trim() || !body.trim()) return;
     setSaving(true);
     if (editAnn) {
-      await base44.entities.Announcement.update(editAnn.id, { title: title.trim(), body: body.trim() });
+      const { error } = await supabase
+        .from('announcements')
+        .update({ title: title.trim(), body: body.trim() })
+        .eq('id', editAnn.id);
+      if (error) throw error;
       toast.success("Announcement updated");
     } else {
-      await base44.entities.Announcement.create({ title: title.trim(), body: body.trim() });
+      const { error } = await supabase
+        .from('announcements')
+        .insert([{ title: title.trim(), body: body.trim() }]);
+      if (error) throw error;
       toast.success("Announcement posted");
     }
     queryClient.invalidateQueries({ queryKey: ["announcements"] });
@@ -87,14 +111,19 @@ export default function Announcements() {
   };
 
   const togglePin = async (ann) => {
-    await base44.entities.Announcement.update(ann.id, { is_pinned: !ann.is_pinned });
+    const { error } = await supabase
+      .from('announcements')
+      .update({ is_pinned: !ann.is_pinned })
+      .eq('id', ann.id);
+    if (error) throw error;
     queryClient.invalidateQueries({ queryKey: ["announcements"] });
     toast.success(ann.is_pinned ? "Unpinned" : "Pinned");
   };
 
   const handleDelete = async () => {
     if (!deleteAnn) return;
-    await base44.entities.Announcement.delete(deleteAnn.id);
+    const { error } = await supabase.from('announcements').delete().eq('id', deleteAnn.id);
+    if (error) throw error;
     queryClient.invalidateQueries({ queryKey: ["announcements"] });
     toast.success("Announcement deleted");
     setDeleteAnn(null);

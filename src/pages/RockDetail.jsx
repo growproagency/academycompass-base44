@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -41,8 +41,12 @@ export default function RockDetail() {
   const { data: rock, isLoading: rockLoading } = useQuery({
     queryKey: ["rock", rockId],
     queryFn: async () => {
-      const rocks = await base44.entities.Rock.filter({ id: rockId });
-      return rocks[0];
+      const { data, error } = await supabase
+        .from('rocks')
+        .select('*')
+        .eq('id', rockId)
+        .single();
+      return data;
     },
     enabled: !!rockId,
   });
@@ -50,45 +54,98 @@ export default function RockDetail() {
   const { data: tasks = [] } = useQuery({
     queryKey: ["rock-tasks", rockId],
     queryFn: async () => {
-      const all = await base44.entities.Task.filter({ rock_id: rockId });
-      return all.filter((t) => !t.archived_at);
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('rock_id', rockId)
+        .is('archived_at', null);
+      return data || [];
     },
     enabled: !!rockId,
   });
 
   const { data: milestones = [] } = useQuery({
     queryKey: ["rock-milestones", rockId],
-    queryFn: () => base44.entities.Milestone.filter({ rock_id: rockId }),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('milestones')
+        .select('*')
+        .eq('rock_id', rockId);
+      return data || [];
+    },
     enabled: !!rockId,
   });
 
-  const { data: rocks = [] } = useQuery({ queryKey: ["rocks"], queryFn: () => base44.entities.Rock.list() });
-  const { data: users = [] } = useQuery({ queryKey: ["users"], queryFn: () => base44.entities.User.list() });
+  const { data: rocks = [] } = useQuery({
+    queryKey: ["rocks"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('rocks').select('*');
+      return data || [];
+    },
+  });
+
+  const { data: users = [] } = useQuery({
+    queryKey: ["users"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('users').select('*');
+      return data || [];
+    },
+  });
 
   const rockMap = useMemo(() => new Map(rocks.map((r) => [r.id, r.name])), [rocks]);
 
   const updateTask = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
+    mutationFn: async ({ id, data: taskData }) => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update(taskData)
+        .eq('id', id)
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rock-tasks", rockId] }),
   });
 
   const createTask = useMutation({
-    mutationFn: (data) => base44.entities.Task.create({ ...data, rock_id: rockId }),
+    mutationFn: async (taskData) => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([{ ...taskData, rock_id: rockId }])
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rock-tasks", rockId] }),
   });
 
   const createMilestone = useMutation({
-    mutationFn: (data) => base44.entities.Milestone.create(data),
+    mutationFn: async (milestoneData) => {
+      const { data, error } = await supabase.from('milestones').insert([milestoneData]).select();
+      if (error) throw error;
+      return data[0];
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rock-milestones", rockId] }),
   });
 
   const toggleMilestone = useMutation({
-    mutationFn: ({ id, completed_at }) => base44.entities.Milestone.update(id, { completed_at }),
+    mutationFn: async ({ id, completed_at }) => {
+      const { data, error } = await supabase
+        .from('milestones')
+        .update({ completed_at })
+        .eq('id', id)
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rock-milestones", rockId] }),
   });
 
   const deleteMilestone = useMutation({
-    mutationFn: (id) => base44.entities.Milestone.delete(id),
+    mutationFn: async (id) => {
+      const { error } = await supabase.from('milestones').delete().eq('id', id);
+      if (error) throw error;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rock-milestones", rockId] }),
   });
 

@@ -1,5 +1,6 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/lib/SupabaseAuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Shield,
@@ -31,25 +32,44 @@ import { toast } from "sonner";
 
 export default function AdminPanel() {
   const queryClient = useQueryClient();
+  const { user: authUser } = useAuth();
 
   const { data: currentUser } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: () => base44.auth.me(),
+    queryKey: ["currentUser", authUser?.id],
+    queryFn: async () => {
+      if (!authUser) return null;
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+      return data;
+    },
+    enabled: !!authUser,
   });
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["admin-users"],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('users').select('*');
+      return data || [];
+    },
   });
 
   const { data: tasks = [] } = useQuery({
     queryKey: ["all-tasks"],
-    queryFn: () => base44.entities.Task.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tasks').select('*');
+      return data || [];
+    },
   });
 
   const { data: rocks = [] } = useQuery({
     queryKey: ["rocks"],
-    queryFn: () => base44.entities.Rock.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('rocks').select('*');
+      return data || [];
+    },
   });
 
   const isAdmin = currentUser?.role === "admin";

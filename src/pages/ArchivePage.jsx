@@ -1,5 +1,5 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Archive, RotateCcw, Trash2, Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,13 +25,24 @@ export default function ArchivePage() {
   const { data: archivedTasks = [], isLoading } = useQuery({
     queryKey: ["archived-tasks"],
     queryFn: async () => {
-      const all = await base44.entities.Task.list();
-      return all.filter((t) => t.archived_at);
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .not('archived_at', 'is', null);
+      return data || [];
     },
   });
 
   const updateTask = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
+    mutationFn: async ({ id, data: taskData }) => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update(taskData)
+        .eq('id', id)
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["archived-tasks"] });
       queryClient.invalidateQueries({ queryKey: ["tasks-active"] });
@@ -40,7 +51,10 @@ export default function ArchivePage() {
   });
 
   const deleteTaskMut = useMutation({
-    mutationFn: (id) => base44.entities.Task.delete(id),
+    mutationFn: async (id) => {
+      const { error } = await supabase.from('tasks').delete().eq('id', id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["archived-tasks"] });
       toast.success("Task deleted permanently");

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/lib/SupabaseAuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   CheckSquare,
@@ -45,34 +46,62 @@ export default function MyTasks() {
   const [editTask, setEditTask] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { user: authUser } = useAuth();
 
   const { data: user } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: () => base44.auth.me(),
+    queryKey: ["currentUser", authUser?.id],
+    queryFn: async () => {
+      if (!authUser) return null;
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+      return data;
+    },
+    enabled: !!authUser,
   });
 
   const { data: allTasks = [], isLoading } = useQuery({
-    queryKey: ["my-tasks"],
+    queryKey: ["my-tasks", authUser?.email],
     queryFn: async () => {
-      const me = await base44.auth.me();
-      const allTasks = await base44.entities.Task.list();
-      const tasks = allTasks.filter((t) => !t.archived_at);
-      return tasks.filter((t) => t.created_by === me.email || t.assignee_email === me.email);
+      if (!authUser?.email) return [];
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .is('archived_at', null)
+        .or(`created_by.eq.${authUser.email},assignee_email.eq.${authUser.email}`);
+      return data || [];
     },
+    enabled: !!authUser?.email,
   });
 
   const { data: rocks = [] } = useQuery({
     queryKey: ["rocks"],
-    queryFn: () => base44.entities.Rock.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('rocks').select('*');
+      return data || [];
+    },
   });
 
   const { data: users = [] } = useQuery({
     queryKey: ["users"],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('users').select('*');
+      return data || [];
+    },
   });
 
   const updateTask = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
+    mutationFn: async ({ id, data: taskData }) => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update(taskData)
+        .eq('id', id)
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
       toast.success("To-Do updated");
@@ -80,7 +109,11 @@ export default function MyTasks() {
   });
 
   const createTask = useMutation({
-    mutationFn: (data) => base44.entities.Task.create(data),
+    mutationFn: async (taskData) => {
+      const { data, error } = await supabase.from('tasks').insert([taskData]).select();
+      if (error) throw error;
+      return data[0];
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
       toast.success("To-Do created");

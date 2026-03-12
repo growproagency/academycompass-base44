@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import {
   CalendarDays,
@@ -41,19 +41,28 @@ export default function CalendarPage() {
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["calendar-tasks"],
     queryFn: async () => {
-      const all = await base44.entities.Task.list();
-      return all.filter((t) => !t.archived_at);
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .is('archived_at', null);
+      return data || [];
     },
   });
 
   const { data: milestones = [] } = useQuery({
     queryKey: ["calendar-milestones"],
-    queryFn: () => base44.entities.Milestone.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('milestones').select('*');
+      return data || [];
+    },
   });
 
   const { data: rocks = [] } = useQuery({
     queryKey: ["rocks"],
-    queryFn: () => base44.entities.Rock.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('rocks').select('*');
+      return data || [];
+    },
   });
 
   const rockMap = useMemo(() => new Map(rocks.map((r) => [r.id, r.name])), [rocks]);

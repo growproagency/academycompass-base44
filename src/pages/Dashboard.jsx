@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/lib/SupabaseAuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -36,42 +37,79 @@ export default function Dashboard() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createStatus, setCreateStatus] = useState("todo");
   const queryClient = useQueryClient();
+  const { user: authUser } = useAuth();
 
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ["tasks-active"],
     queryFn: async () => {
-      const all = await base44.entities.Task.list();
-      return all.filter((t) => !t.archived_at);
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .is('archived_at', null);
+      return data || [];
     },
   });
 
   const { data: rocks = [] } = useQuery({
     queryKey: ["rocks"],
-    queryFn: () => base44.entities.Rock.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('rocks').select('*');
+      return data || [];
+    },
   });
 
   const { data: users = [] } = useQuery({
     queryKey: ["users"],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('users').select('*');
+      return data || [];
+    },
   });
 
   const { data: announcements = [] } = useQuery({
     queryKey: ["announcements-pinned"],
-    queryFn: () => base44.entities.Announcement.filter({ is_pinned: true }),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('is_pinned', true);
+      return data || [];
+    },
   });
 
   const { data: user } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: () => base44.auth.me(),
+    queryKey: ["currentUser", authUser?.id],
+    queryFn: async () => {
+      if (!authUser) return null;
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+      return data;
+    },
+    enabled: !!authUser,
   });
 
   const createTask = useMutation({
-    mutationFn: (data) => base44.entities.Task.create(data),
+    mutationFn: async (taskData) => {
+      const { data, error } = await supabase.from('tasks').insert([taskData]).select();
+      if (error) throw error;
+      return data[0];
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks-active"] }),
   });
 
   const updateTask = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
+    mutationFn: async ({ id, data: taskData }) => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .update(taskData)
+        .eq('id', id)
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks-active"] }),
   });
 
@@ -135,7 +173,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Welcome back, {user?.full_name?.split(" ")[0] || "there"}
+            Welcome back, {authUser?.user_metadata?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "there"}
           </p>
         </div>
         <Tabs value={view} onValueChange={setView}>
