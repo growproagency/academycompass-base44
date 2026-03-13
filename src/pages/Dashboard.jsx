@@ -220,15 +220,34 @@ export default function Dashboard() {
   const rockMap = useMemo(() => new Map(rocks.map((r) => [r.id, r.name])), [rocks]);
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter((t) => {
-      if (filterStatus !== "all" && t.status !== filterStatus) return false;
+    console.log('🔍 Dashboard: Filtering tasks');
+    console.log('📊 Dashboard: Total tasks before filter:', tasks.length);
+    console.log('🎯 Dashboard: Current filter value:', filterStatus);
+    console.log('📋 Dashboard: All task statuses:', tasks.map(t => ({ id: t.id, status: t.status })));
+    
+    const filtered = tasks.filter((t) => {
+      if (filterStatus !== "all" && t.status !== filterStatus) {
+        console.log(`⏩ Dashboard: Excluding task ${t.id} (status: ${t.status}, filter: ${filterStatus})`);
+        return false;
+      }
       return true;
     });
+    
+    console.log('✅ Dashboard: Filtered tasks count:', filtered.length);
+    console.log('📊 Dashboard: Tasks per status:', {
+      todo: filtered.filter(t => t.status === 'todo').length,
+      in_progress: filtered.filter(t => t.status === 'in_progress').length,
+      done: filtered.filter(t => t.status === 'done').length
+    });
+    
+    return filtered;
   }, [tasks, filterStatus]);
 
   const getColumnTasks = (status) => {
     const statusTasks = filteredTasks.filter((t) => t.status === status);
-    console.log(`🔍 Dashboard: getColumnTasks("${status}") returned ${statusTasks.length} tasks`);
+    console.log(`🔍 Dashboard: getColumnTasks("${status}") checking ${filteredTasks.length} filtered tasks`);
+    console.log(`📋 Dashboard: Tasks with status="${status}":`, statusTasks.map(t => ({ id: t.id, title: t.title })));
+    console.log(`✅ Dashboard: getColumnTasks("${status}") returned ${statusTasks.length} tasks`);
     return statusTasks;
   };
 
