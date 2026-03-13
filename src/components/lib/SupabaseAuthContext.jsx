@@ -73,76 +73,91 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     console.log('🚀 Auth initialization starting...');
+    let mounted = true;
     
     // Get initial session and profile
     const initAuth = async () => {
       try {
+        console.log('📡 Calling supabase.auth.getSession()...');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        console.log('🔐 Session restore result:', {
+        if (!mounted) {
+          console.log('⚠️ Component unmounted during session fetch, aborting');
+          return;
+        }
+        
+        console.log('🔐 getSession() result:', {
           hasSession: !!session,
           userId: session?.user?.id,
           email: session?.user?.email,
+          expiresAt: session?.expires_at,
           sessionError: sessionError?.message
         });
 
         if (sessionError) {
           console.error('❌ Session restore error:', sessionError);
-          // Clear stale state and redirect
-          console.log('🔄 Clearing stale session state, redirecting to Sign In');
+          // Only redirect for actual errors, not missing sessions
+          console.log('🔄 Session error detected, clearing state');
           sessionStorage.setItem('auth_redirect_reason', 'session_error');
           setUser(null);
           setProfile(null);
           setSession(null);
+          setAuthError(sessionError);
           setIsLoadingAuth(false);
           return;
         }
 
         if (!session) {
-          console.log('ℹ️ No active session found');
+          console.log('ℹ️ No active session found - user needs to sign in');
           setUser(null);
           setProfile(null);
           setSession(null);
+          setAuthError(null);
           setIsLoadingAuth(false);
           return;
         }
 
         // Valid session found
-        console.log('✅ Valid session restored');
+        console.log('✅ Valid session restored, setting auth state');
         setSession(session);
         setUser(session.user);
+        setAuthError(null);
 
         // Start idle timer
         resetIdleTimer();
 
         // Fetch user profile
-        console.log('🔍 Querying profile with auth_user_id:', session.user.id);
+        console.log('🔍 Fetching profile for auth_user_id:', session.user.id);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('auth_user_id', session.user.id)
           .maybeSingle();
 
-        console.log('📊 Profile query result:', {
+        if (!mounted) {
+          console.log('⚠️ Component unmounted during profile fetch, aborting');
+          return;
+        }
+
+        console.log('📊 Profile query completed:', {
           found: !!profileData,
           organizationId: profileData?.organization_id,
           status: profileData?.status,
           role: profileData?.role,
-          error: profileError?.message
+          errorCode: profileError?.code,
+          errorMessage: profileError?.message
         });
 
         if (profileError) {
           console.error('❌ Profile fetch error:', profileError);
           setProfile(null);
         } else if (profileData) {
-          console.log('✅ Profile loaded successfully');
+          console.log('✅ Profile loaded and set successfully');
           setProfile(profileData);
         } else {
-          console.warn('⚠️ No profile found for authenticated user');
+          console.warn('⚠️ No profile record found for authenticated user');
           setProfile(null);
         }
-
-        setAuthError(null);
       } catch (error) {
         console.error('💥 Auth initialization exception:', error);
         setAuthError(error);
@@ -150,20 +165,31 @@ export const AuthProvider = ({ children }) => {
         setProfile(null);
         setSession(null);
       } finally {
-        console.log('🏁 Auth initialization complete');
-        setIsLoadingAuth(false);
+        if (mounted) {
+          console.log('🏁 Auth initialization complete, setting isLoadingAuth = false');
+          setIsLoadingAuth(false);
+        }
       }
     };
 
     initAuth();
+    
+    return () => {
+      mounted = false;
+    };
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state changed:', event, session ? 'session present' : 'no session');
+      console.log('🔄 onAuthStateChange fired:', {
+        event,
+        hasSession: !!session,
+        userId: session?.user?.id,
+        email: session?.user?.email
+      });
 
       // Handle session expiry or sign out
-      if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
-        console.log('🚪 Session expired or signed out');
+      if (event === 'SIGNED_OUT') {
+        console.log('🚪 SIGNED_OUT event - clearing all auth state');
         setUser(null);
         setProfile(null);
         setSession(null);
@@ -173,6 +199,19 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
+      if (event === 'TOKEN_REFRESHED' && !session) {
+        console.log('🔄 TOKEN_REFRESHED but no session - session likely expired');
+        sessionStorage.setItem('auth_redirect_reason', 'session_expired');
+        setUser(null);
+        setProfile(null);
+        setSession(null);
+        if (idleTimerRef.current) {
+          clearTimeout(idleTimerRef.current);
+        }
+        return;
+      }
+
+      // Update session state
       setSession(session);
       setUser(session?.user || null);
 
@@ -180,26 +219,32 @@ export const AuthProvider = ({ children }) => {
         // Reset idle timer on auth changes
         resetIdleTimer();
 
-        console.log('🔍 Re-querying profile after auth change, user ID:', session.user.id);
+        console.log('🔍 Auth change with session - re-querying profile for user:', session.user.id);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('auth_user_id', session.user.id)
           .maybeSingle();
 
-        console.log('📊 Profile re-query result:', { found: !!profileData, error: profileError?.message });
+        console.log('📊 Profile re-query after auth change:', {
+          found: !!profileData,
+          organizationId: profileData?.organization_id,
+          status: profileData?.status,
+          error: profileError?.message
+        });
 
         if (profileError) {
           console.error('❌ Profile fetch error on auth change:', profileError);
           setProfile(null);
         } else if (profileData) {
-          console.log('✅ Profile updated');
+          console.log('✅ Profile updated after auth change');
           setProfile(profileData);
         } else {
           console.warn('⚠️ No profile found after auth change');
           setProfile(null);
         }
       } else {
+        console.log('ℹ️ Auth change with no session - clearing profile');
         setProfile(null);
         if (idleTimerRef.current) {
           clearTimeout(idleTimerRef.current);
@@ -207,7 +252,10 @@ export const AuthProvider = ({ children }) => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('🧹 Cleaning up auth state change subscription');
+      subscription.unsubscribe();
+    };
   }, [resetIdleTimer]);
 
   const isAuthorized = () => {

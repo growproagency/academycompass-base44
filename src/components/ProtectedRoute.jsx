@@ -3,30 +3,38 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from './lib/SupabaseAuthContext';
 
 export default function ProtectedRoute({ children, requireAdmin = false }) {
-  const { user, profile, isLoadingAuth, isAuthorized, isAdmin, authError } = useAuth();
+  const { user, profile, isLoadingAuth, isAuthorized, isAdmin, authError, session } = useAuth();
   const [authTimeout, setAuthTimeout] = React.useState(false);
 
   React.useEffect(() => {
     // Set a timeout to prevent infinite loading
     const timer = setTimeout(() => {
       if (isLoadingAuth) {
-        console.error('⏰ Auth initialization timeout (10 seconds exceeded)');
+        console.error('⏰ ProtectedRoute: Auth initialization timeout (15 seconds exceeded)');
         setAuthTimeout(true);
       }
-    }, 10000); // 10 second timeout
+    }, 15000); // 15 second timeout (increased from 10)
 
     return () => clearTimeout(timer);
   }, [isLoadingAuth]);
 
-  console.log('🛡️ ProtectedRoute check:', { 
-    user: !!user, 
-    profile: !!profile, 
-    isLoadingAuth, 
-    isAuthorized: user ? isAuthorized() : false,
+  console.log('🛡️ ProtectedRoute evaluation:', { 
+    isLoadingAuth,
+    hasUser: !!user, 
+    hasProfile: !!profile,
+    hasSession: !!session,
+    organizationId: profile?.organization_id,
+    profileStatus: profile?.status,
+    isAuthorized: user ? isAuthorized() : 'N/A (no user)',
     requireAdmin,
-    isAdmin: user ? isAdmin() : false,
-    authError: !!authError,
-    authTimeout
+    isAdmin: user ? isAdmin() : 'N/A (no user)',
+    authError: authError?.message || null,
+    authTimeout,
+    decision: isLoadingAuth ? 'WAITING' : 
+              authTimeout ? 'TIMEOUT' : 
+              !user ? 'NO_USER' : 
+              !isAuthorized() ? 'NOT_AUTHORIZED' : 
+              (requireAdmin && !isAdmin()) ? 'NOT_ADMIN' : 'ALLOW'
   });
 
   // Show critical error page only for unexpected system failures
@@ -65,8 +73,9 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
     return <Navigate to="/SignIn" replace />;
   }
 
+  // CRITICAL: Wait for auth initialization to complete before making decisions
   if (isLoadingAuth) {
-    console.log('⏳ Waiting for auth initialization to complete...');
+    console.log('⏳ ProtectedRoute: Auth still loading, showing loading state (do NOT redirect yet)');
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="text-center space-y-3">
@@ -77,21 +86,22 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
     );
   }
 
+  // Auth initialization complete - now safe to make routing decisions
   if (!user) {
-    console.log('🔄 Redirect reason: No authenticated user, redirecting to Sign In');
+    console.log('🔄 ProtectedRoute redirect: No authenticated user found after auth init → /SignIn');
     return <Navigate to="/SignIn" replace />;
   }
 
   if (!isAuthorized()) {
-    console.log('🔄 Redirect reason: User not authorized (missing org or pending approval), redirecting to Access Pending');
+    console.log('🔄 ProtectedRoute redirect: User authenticated but not authorized (org/status issue) → /AccessPending');
     return <Navigate to="/AccessPending" replace />;
   }
 
   if (requireAdmin && !isAdmin()) {
-    console.log('🔄 Redirect reason: Admin required but user is not admin, redirecting to Dashboard');
+    console.log('🔄 ProtectedRoute redirect: Admin route but user is not admin → /Dashboard');
     return <Navigate to="/Dashboard" replace />;
   }
 
-  console.log('✅ Access granted - valid session, authorized user');
+  console.log('✅ ProtectedRoute: Access granted - rendering protected content');
   return children;
 }
