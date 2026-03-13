@@ -43,16 +43,22 @@ export default function Dashboard() {
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ["tasks-active", profile?.organization_id],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
+      if (!profile?.organization_id) {
+        console.log('⚠️ Dashboard: Cannot fetch tasks - no organization_id');
+        return [];
+      }
+      console.log('📡 Dashboard: Fetching tasks for organization:', profile.organization_id);
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('organization_id', profile.organization_id)
-        .is('archived_at', null);
+        .eq('organization_id', profile.organization_id);
       if (error) {
-        console.error('❌ Tasks query error:', error);
+        console.error('❌ Dashboard: Tasks query error:', error);
         return [];
       }
+      console.log('✅ Dashboard: Tasks fetched:', data?.length || 0, 'tasks');
+      console.log('📊 Dashboard: Task statuses:', data?.map(t => t.status));
+      console.log('🔍 Dashboard: First task sample:', data?.[0]);
       return data || [];
     },
     enabled: !!profile?.organization_id,
@@ -159,10 +165,14 @@ export default function Dashboard() {
       }
       
       console.log('✅ Dashboard: Task created successfully:', data[0]);
+      console.log('🔄 Dashboard: Invalidating query key: ["tasks-active", profile.organization_id]');
       return data[0];
     },
-    onSuccess: () => {
+    onSuccess: (newTask) => {
+      console.log('🎉 Dashboard: Create mutation onSuccess triggered');
+      console.log('📝 Dashboard: New task data:', newTask);
       queryClient.invalidateQueries({ queryKey: ["tasks-active"] });
+      console.log('✅ Dashboard: Query invalidated, list should refresh');
       toast.success('To-Do created');
     },
     onError: (error) => {
@@ -202,7 +212,11 @@ export default function Dashboard() {
     });
   }, [tasks, filterRock]);
 
-  const getColumnTasks = (status) => filteredTasks.filter((t) => t.status === status);
+  const getColumnTasks = (status) => {
+    const statusTasks = filteredTasks.filter((t) => t.status === status);
+    console.log(`🔍 Dashboard: getColumnTasks("${status}") returned ${statusTasks.length} tasks`);
+    return statusTasks;
+  };
 
   const stats = useMemo(() => ({
     totalTodos: tasks.length,
@@ -219,12 +233,13 @@ export default function Dashboard() {
   const handleCreateTask = async (formData) => {
     console.log('💾 Dashboard: handleCreateTask called with data:', formData);
     try {
-      await createTask.mutateAsync(formData);
+      const result = await createTask.mutateAsync(formData);
+      console.log('✅ Dashboard: Task mutation completed, result:', result);
       setCreateOpen(false);
+      console.log('🚪 Dashboard: Modal closed');
     } catch (error) {
       console.error('❌ Dashboard: Failed to create task:', error);
       // Dialog stays open on error so user can retry
-      throw error;
     }
   };
 

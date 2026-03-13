@@ -60,23 +60,24 @@ export default function MyTasks() {
     queryKey: ["my-tasks", profile?.organization_id, user?.email],
     queryFn: async () => {
       if (!profile?.organization_id || !user?.email) {
-        console.log('⚠️ Cannot fetch tasks: missing organization_id or user email');
+        console.log('⚠️ MyTasks: Cannot fetch tasks - missing organization_id or user email');
         return [];
       }
-      console.log('📡 Fetching tasks for:', { 
+      console.log('📡 MyTasks: Fetching tasks for:', { 
         organizationId: profile.organization_id, 
         userEmail: user.email 
       });
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('organization_id', profile.organization_id)
-        .is('archived_at', null)
-        .or(`assignee_email.eq.${user.email}`);
+        .eq('organization_id', profile.organization_id);
       if (error) {
-        console.error('❌ Tasks query error:', error);
+        console.error('❌ MyTasks: Tasks query error:', error);
         return [];
       }
+      console.log('✅ MyTasks: Tasks fetched:', data?.length || 0, 'tasks');
+      console.log('📊 MyTasks: Task statuses:', data?.map(t => t.status));
+      console.log('🔍 MyTasks: First task sample:', data?.[0]);
       return data || [];
     },
     enabled: !!profile?.organization_id && !!user?.email,
@@ -181,10 +182,14 @@ export default function MyTasks() {
       }
       
       console.log('✅ MyTasks: Task created successfully:', data[0]);
+      console.log('🔄 MyTasks: Invalidating query key: ["my-tasks", profile.organization_id, user.email]');
       return data[0];
     },
-    onSuccess: () => {
+    onSuccess: (newTask) => {
+      console.log('🎉 MyTasks: Create mutation onSuccess triggered');
+      console.log('📝 MyTasks: New task data:', newTask);
       queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
+      console.log('✅ MyTasks: Query invalidated, list should refresh');
       toast.success("To-Do created");
     },
     onError: (error) => {
