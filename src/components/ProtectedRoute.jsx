@@ -10,7 +10,7 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
     // Set a timeout to prevent infinite loading
     const timer = setTimeout(() => {
       if (isLoadingAuth) {
-        console.error('⏰ Auth initialization timeout');
+        console.error('⏰ Auth initialization timeout (10 seconds exceeded)');
         setAuthTimeout(true);
       }
     }, 10000); // 10 second timeout
@@ -29,15 +29,16 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
     authTimeout
   });
 
-  if (authTimeout || authError) {
-    console.error('💥 Auth failed or timed out, showing recovery UI');
+  // Show critical error page only for unexpected system failures
+  if (authTimeout && authError) {
+    console.error('💥 Critical auth system failure:', authError);
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background p-4">
         <div className="max-w-md text-center space-y-4">
           <div className="text-destructive text-4xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold">Authentication Error</h2>
+          <h2 className="text-xl font-semibold">System Error</h2>
           <p className="text-sm text-muted-foreground">
-            {authError?.message || "Authentication is taking too long. Please try again."}
+            An unexpected authentication error occurred. Please try again.
           </p>
           <div className="flex gap-2 justify-center">
             <button
@@ -58,8 +59,14 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
     );
   }
 
+  // Auth timeout without error means stale state - redirect to sign in
+  if (authTimeout && !authError) {
+    console.log('🔄 Redirect reason: Auth timeout, redirecting to Sign In');
+    return <Navigate to="/SignIn" replace />;
+  }
+
   if (isLoadingAuth) {
-    console.log('⏳ Still loading auth...');
+    console.log('⏳ Waiting for auth initialization to complete...');
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="text-center space-y-3">
@@ -71,20 +78,20 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
   }
 
   if (!user) {
-    console.log('🔒 No user, redirecting to SignIn');
+    console.log('🔄 Redirect reason: No authenticated user, redirecting to Sign In');
     return <Navigate to="/SignIn" replace />;
   }
 
   if (!isAuthorized()) {
-    console.log('⛔ Not authorized, redirecting to AccessPending');
+    console.log('🔄 Redirect reason: User not authorized (missing org or pending approval), redirecting to Access Pending');
     return <Navigate to="/AccessPending" replace />;
   }
 
   if (requireAdmin && !isAdmin()) {
-    console.log('👮 Not admin, redirecting to Dashboard');
+    console.log('🔄 Redirect reason: Admin required but user is not admin, redirecting to Dashboard');
     return <Navigate to="/Dashboard" replace />;
   }
 
-  console.log('✅ Access granted');
+  console.log('✅ Access granted - valid session, authorized user');
   return children;
 }
