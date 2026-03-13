@@ -51,7 +51,13 @@ export default function Dashboard() {
       console.log('📡 Dashboard: Fetching tasks for organization:', profile.organization_id);
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select(`
+          *,
+          assignee:assigned_to (
+            id,
+            full_name
+          )
+        `)
         .eq('organization_id', profile.organization_id);
       if (error) {
         console.error('❌ Dashboard: Tasks query error:', error);
@@ -145,6 +151,7 @@ export default function Dashboard() {
         status: taskData.status || 'todo',
         priority: taskData.priority || 'medium',
         due_date: taskData.due_date || null,
+        assigned_to: taskData.assigned_to || null,
         organization_id: profile.organization_id,
         created_by: authUser.id,
       };

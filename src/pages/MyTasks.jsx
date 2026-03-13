@@ -69,7 +69,13 @@ export default function MyTasks() {
       });
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select(`
+          *,
+          assignee:assigned_to (
+            id,
+            full_name
+          )
+        `)
         .eq('organization_id', profile.organization_id);
       if (error) {
         console.error('❌ MyTasks: Tasks query error:', error);
@@ -161,6 +167,7 @@ export default function MyTasks() {
         status: taskData.status || 'todo',
         priority: taskData.priority || 'medium',
         due_date: taskData.due_date || null,
+        assigned_to: taskData.assigned_to || null,
         organization_id: profile.organization_id,
         created_by: user.id,
       };
@@ -311,6 +318,9 @@ export default function MyTasks() {
                       {format(parseISO(task.due_date), "MMM d")}
                     </Badge>
                   )}
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground">
+                    {task.assignee?.full_name || "Unassigned"}
+                  </Badge>
                 </div>
               </div>
             </Card>

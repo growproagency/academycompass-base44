@@ -28,7 +28,7 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
     status: defaultStatus || "todo",
     priority: "medium",
     rock_id: "",
-    assignee_email: "",
+    assigned_to: "",
     due_date: "",
     subtasks: [],
   });
@@ -53,7 +53,7 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
           status: task.status || "todo",
           priority: task.priority || "medium",
           rock_id: task.rock_id || "",
-          assignee_email: task.assignee_email || "",
+          assigned_to: task.assigned_to || "",
           due_date: task.due_date || "",
           subtasks: task.subtasks || [],
         });
@@ -65,7 +65,7 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
           status: defaultStatus || "todo",
           priority: "medium",
           rock_id: "",
-          assignee_email: "",
+          assigned_to: "",
           due_date: "",
           subtasks: [],
         });
@@ -180,13 +180,13 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
               </Select>
             </div>
             <div>
-              <Label>Assignee</Label>
-              <Select value={form.assignee_email || "none"} onValueChange={(v) => setForm({ ...form, assignee_email: v === "none" ? "" : v })}>
+              <Label>Assign To</Label>
+              <Select value={form.assigned_to || "none"} onValueChange={(v) => setForm({ ...form, assigned_to: v === "none" ? "" : v })}>
                 <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Unassigned</SelectItem>
                   {users?.map((u) => (
-                    <SelectItem key={u.id} value={u.email}>{u.full_name || u.email}</SelectItem>
+                    <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
