@@ -34,22 +34,16 @@ export const AuthProvider = ({ children }) => {
             .eq('auth_user_id', session.user.id)
             .single();
 
-          if (!profileError && profileData) {
+          if (profileError) {
+            console.error('Profile fetch error:', profileError);
+            // Profile doesn't exist or query blocked - set profile to null
+            // This will redirect to AccessPending via ProtectedRoute
+            setProfile(null);
+          } else if (profileData) {
             setProfile(profileData);
           } else {
-            // User authenticated but no profile - create pending profile
-            const { data: newProfile } = await supabase
-              .from('profiles')
-              .insert({
-                auth_user_id: session.user.id,
-                email: session.user.email,
-                full_name: session.user.user_metadata?.full_name || session.user.email,
-                status: 'pending'
-              })
-              .select('*, organizations(*)')
-              .single();
-            
-            setProfile(newProfile);
+            // Query succeeded but returned no data
+            setProfile(null);
           }
         }
       } catch (error) {
@@ -68,13 +62,18 @@ export const AuthProvider = ({ children }) => {
       setUser(session?.user || null);
 
       if (session?.user) {
-        const { data: profileData } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*, organizations(*)')
           .eq('auth_user_id', session.user.id)
           .single();
 
-        setProfile(profileData);
+        if (profileError) {
+          console.error('Profile fetch error on auth change:', profileError);
+          setProfile(null);
+        } else {
+          setProfile(profileData || null);
+        }
       } else {
         setProfile(null);
       }
