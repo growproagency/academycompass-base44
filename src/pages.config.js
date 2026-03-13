@@ -47,8 +47,34 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import AccessPending from './pages/AccessPending';
+import AdminPanel from './pages/AdminPanel';
+import Announcements from './pages/Announcements';
+import ArchivePage from './pages/ArchivePage';
+import CalendarPage from './pages/CalendarPage';
+import Dashboard from './pages/Dashboard';
+import MyTasks from './pages/MyTasks';
+import RockDetail from './pages/RockDetail';
+import Rocks from './pages/Rocks';
+import SignIn from './pages/SignIn';
+import StrategicOrganizer from './pages/StrategicOrganizer';
 
-export const pagesConfig = {
-	Pages: {}
+
+export const PAGES = {
+    "AccessPending": AccessPending,
+    "AdminPanel": AdminPanel,
+    "Announcements": Announcements,
+    "ArchivePage": ArchivePage,
+    "CalendarPage": CalendarPage,
+    "Dashboard": Dashboard,
+    "MyTasks": MyTasks,
+    "RockDetail": RockDetail,
+    "Rocks": Rocks,
+    "SignIn": SignIn,
+    "StrategicOrganizer": StrategicOrganizer,
 }
 
+export const pagesConfig = {
+    mainPage: "Dashboard",
+    Pages: PAGES,
+};

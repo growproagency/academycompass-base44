@@ -49,23 +49,14 @@ export default function Dashboard() {
         return [];
       }
       console.log('📡 Dashboard: Fetching tasks for organization:', profile.organization_id);
+      
+      // First, try simple query like sidebar does
       const { data, error } = await supabase
         .from('tasks')
-        .select(`
-          *,
-          assignee:assigned_to (
-            id,
-            full_name
-          ),
-          subtasks (
-            id,
-            title,
-            completed,
-            sort_order
-          )
-        `)
+        .select('*')
         .eq('organization_id', profile.organization_id)
         .is('archived_at', null);
+      
       if (error) {
         console.error('❌ Dashboard: Tasks query error:', error);
         console.error('🔍 Dashboard: Error details:', {
@@ -76,11 +67,46 @@ export default function Dashboard() {
         });
         return [];
       }
+      
       console.log('✅ Dashboard: Raw tasks fetched from Supabase:', data?.length || 0, 'tasks');
       console.log('📊 Dashboard: Raw task statuses:', data?.map(t => ({ id: t.id, status: t.status, title: t.title })));
-      console.log('🔍 Dashboard: First task full sample:', data?.[0]);
-      console.log('📋 Dashboard: All tasks:', data);
-      return data || [];
+      
+      if (!data || data.length === 0) {
+        console.warn('⚠️ Dashboard: No tasks returned from query');
+        return [];
+      }
+      
+      // Now fetch related data for each task
+      const tasksWithRelations = await Promise.all(
+        data.map(async (task) => {
+          // Fetch assignee if assigned_to exists
+          let assignee = null;
+          if (task.assigned_to) {
+            const { data: assigneeData } = await supabase
+              .from('profiles')
+              .select('id, full_name')
+              .eq('id', task.assigned_to)
+              .maybeSingle();
+            assignee = assigneeData;
+          }
+          
+          // Fetch subtasks
+          const { data: subtasksData } = await supabase
+            .from('subtasks')
+            .select('id, title, completed, sort_order')
+            .eq('task_id', task.id)
+            .order('sort_order');
+          
+          return {
+            ...task,
+            assignee,
+            subtasks: subtasksData || []
+          };
+        })
+      );
+      
+      console.log('✅ Dashboard: Tasks with relations:', tasksWithRelations.length);
+      return tasksWithRelations;
     },
     enabled: !!profile?.organization_id,
   });
@@ -497,28 +523,6 @@ export default function Dashboard() {
 
       {view === "todos" ? (
         <>
-          {/* DEBUG: Raw Tasks Panel */}
-          <Card className="p-4 bg-yellow-50 border-yellow-200">
-            <p className="text-xs font-semibold mb-2">🔍 DEBUG: Raw Tasks Data</p>
-            <div className="space-y-1 text-xs">
-              <p><strong>Total tasks fetched:</strong> {tasks.length}</p>
-              <p><strong>Filter value:</strong> "{filterStatus}"</p>
-              <p><strong>Filtered tasks:</strong> {filteredTasks.length}</p>
-              <p><strong>Status breakdown:</strong></p>
-              <ul className="ml-4 space-y-0.5">
-                <li>todo: {tasks.filter(t => t.status === 'todo').length}</li>
-                <li>in_progress: {tasks.filter(t => t.status === 'in_progress').length}</li>
-                <li>done: {tasks.filter(t => t.status === 'done').length}</li>
-              </ul>
-              <details className="mt-2">
-                <summary className="cursor-pointer font-semibold">View raw task statuses</summary>
-                <pre className="mt-1 text-[10px] max-h-40 overflow-auto bg-white p-2 rounded">
-                  {JSON.stringify(tasks.map(t => ({ id: t.id, title: t.title, status: t.status })), null, 2)}
-                </pre>
-              </details>
-            </div>
-          </Card>
-
           {/* Filters */}
           <div className="flex items-center gap-3">
             <Filter className="w-4 h-4 text-muted-foreground" />
