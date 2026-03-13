@@ -64,14 +64,22 @@ export default function Dashboard() {
             sort_order
           )
         `)
-        .eq('organization_id', profile.organization_id);
+        .eq('organization_id', profile.organization_id)
+        .is('archived_at', null);
       if (error) {
         console.error('❌ Dashboard: Tasks query error:', error);
+        console.error('🔍 Dashboard: Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
         return [];
       }
-      console.log('✅ Dashboard: Tasks fetched:', data?.length || 0, 'tasks');
-      console.log('📊 Dashboard: Task statuses:', data?.map(t => t.status));
-      console.log('🔍 Dashboard: First task sample:', data?.[0]);
+      console.log('✅ Dashboard: Raw tasks fetched from Supabase:', data?.length || 0, 'tasks');
+      console.log('📊 Dashboard: Raw task statuses:', data?.map(t => ({ id: t.id, status: t.status, title: t.title })));
+      console.log('🔍 Dashboard: First task full sample:', data?.[0]);
+      console.log('📋 Dashboard: All tasks:', data);
       return data || [];
     },
     enabled: !!profile?.organization_id,
