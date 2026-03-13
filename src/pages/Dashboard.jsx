@@ -111,8 +111,15 @@ export default function Dashboard() {
 
   const createTask = useMutation({
     mutationFn: async (taskData) => {
+      console.log('🆕 Dashboard: Create task mutation triggered');
+      console.log('👤 Authenticated user.id:', user?.id);
+      console.log('🏢 Profile organization_id:', profile?.organization_id);
+      
       if (!profile?.organization_id) {
-        throw new Error('Missing organization ID');
+        const errorMsg = 'Missing organization_id';
+        console.error('❌', errorMsg);
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
       }
       
       const payload = {
@@ -120,20 +127,25 @@ export default function Dashboard() {
         organization_id: profile.organization_id,
       };
       
-      console.log('📤 Creating task:', payload);
+      console.log('📤 Dashboard: Final task insert payload:', payload);
       const { data, error } = await supabase.from('tasks').insert([payload]).select();
+      
       if (error) {
-        console.error('❌ Task insert error:', error);
+        console.error('❌ Dashboard: Task insert error:', error);
+        console.error('📋 Dashboard: Failed payload was:', payload);
+        toast.error(`Failed to create To-Do: ${error.message}`);
         throw error;
       }
-      console.log('✅ Task created successfully');
+      
+      console.log('✅ Dashboard: Task created successfully:', data[0]);
       return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks-active"] });
+      toast.success('To-Do created');
     },
     onError: (error) => {
-      console.error('💥 Create task mutation failed:', error);
+      console.error('💥 Dashboard: Create task mutation failed:', error);
     },
   });
 
@@ -184,10 +196,13 @@ export default function Dashboard() {
   };
 
   const handleCreateTask = async (formData) => {
+    console.log('💾 Dashboard: handleCreateTask called with data:', formData);
     try {
       await createTask.mutateAsync(formData);
+      setCreateOpen(false);
     } catch (error) {
-      console.error('❌ Failed to create task:', error);
+      console.error('❌ Dashboard: Failed to create task:', error);
+      // Dialog stays open on error so user can retry
       throw error;
     }
   };
@@ -349,6 +364,8 @@ export default function Dashboard() {
         onOpenChange={setCreateOpen}
         rocks={rocks}
         users={users}
+        user={user}
+        profile={profile}
         defaultStatus={createStatus}
         onSave={handleCreateTask}
       />
