@@ -124,21 +124,25 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     try {
       console.log('🚪 Signing out...');
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('❌ Sign out error:', error);
-        throw error;
-      }
-      console.log('✅ Sign out successful');
-      // Clear state
+      
+      // Clear state immediately
       setUser(null);
       setProfile(null);
       setSession(null);
-      // Redirect to sign in
-      window.location.href = '/SignIn';
+      setAuthError(null);
+      
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('❌ Sign out error:', error);
+      }
+      console.log('✅ Sign out successful, redirecting...');
+      
+      // Force redirect even if error
+      window.location.replace('/SignIn');
     } catch (error) {
       console.error('💥 Sign out failed:', error);
-      throw error;
+      // Still redirect on failure
+      window.location.replace('/SignIn');
     }
   };
 

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/components/lib/supabaseClient";
+import { useAuth } from "@/components/lib/SupabaseAuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -56,7 +57,7 @@ const STATUS_CONFIG = {
   complete: { label: "Complete", icon: CheckCircle2, className: "bg-primary/10 text-primary border-primary/20" },
 };
 
-function RockFormDialog({ open, onOpenChange, rock, onSuccess }) {
+function RockFormDialog({ open, onOpenChange, rock, onSuccess, profile, user }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -75,27 +76,62 @@ function RockFormDialog({ open, onOpenChange, rock, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim()) return;
-    setSaving(true);
-    const data = {
-      name: name.trim(),
-      description: description.trim() || undefined,
-      due_date: dueDate || undefined,
-      rock_status: status,
-    };
-    if (rock) {
-      const { error } = await supabase.from('rocks').update(data).eq('id', rock.id);
-      if (error) throw error;
-      toast.success("Rock updated");
-    } else {
-      const { error } = await supabase.from('rocks').insert([data]);
-      if (error) throw error;
-      toast.success("Rock created");
+    if (!name.trim()) {
+      toast.error("Rock name is required");
+      return;
     }
-    queryClient.invalidateQueries({ queryKey: ["rocks"] });
-    setSaving(false);
-    onSuccess?.();
-    onOpenChange(false);
+    
+    if (!profile?.organization_id) {
+      toast.error("Missing organization ID");
+      console.error('❌ Cannot create rock: no organization_id');
+      return;
+    }
+    
+    setSaving(true);
+    
+    try {
+      const data = {
+        name: name.trim(),
+        description: description.trim() || undefined,
+        due_date: dueDate || undefined,
+        rock_status: status,
+        organization_id: profile.organization_id,
+        owner_id: user?.email || profile?.email,
+      };
+      
+      console.log('📤 Rock mutation payload:', data);
+      
+      if (rock) {
+        const { error } = await supabase.from('rocks').update(data).eq('id', rock.id);
+        if (error) {
+          console.error('❌ Rock update error:', error);
+          toast.error("Failed to update rock: " + error.message);
+          setSaving(false);
+          return;
+        }
+        console.log('✅ Rock updated successfully');
+        toast.success("Rock updated");
+      } else {
+        const { error } = await supabase.from('rocks').insert([data]);
+        if (error) {
+          console.error('❌ Rock insert error:', error);
+          toast.error("Failed to create rock: " + error.message);
+          setSaving(false);
+          return;
+        }
+        console.log('✅ Rock created successfully');
+        toast.success("Rock created");
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["rocks"] });
+      setSaving(false);
+      onSuccess?.();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('💥 Rock mutation exception:', error);
+      toast.error("An error occurred: " + error.message);
+      setSaving(false);
+    }
   };
 
   return (
@@ -145,42 +181,83 @@ function RockFormDialog({ open, onOpenChange, rock, onSuccess }) {
 }
 
 export default function Rocks() {
+  const { profile, user } = useAuth();
   const [formOpen, setFormOpen] = useState(false);
   const [editRock, setEditRock] = useState(null);
   const [deleteRock, setDeleteRock] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: rocks = [], isLoading } = useQuery({
-    queryKey: ["rocks"],
+    queryKey: ["rocks", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('rocks').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('rocks')
+        .select('*')
+        .eq('organization_id', profile.organization_id);
+      if (error) {
+        console.error('❌ Rocks query error:', error);
+        toast.error("Failed to load rocks");
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ["all-tasks"],
+    queryKey: ["all-tasks", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('tasks').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('organization_id', profile.organization_id);
+      if (error) {
+        console.error('❌ Tasks query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const { data: milestones = [] } = useQuery({
-    queryKey: ["milestones"],
+    queryKey: ["milestones", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('milestones').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('milestones')
+        .select('*')
+        .eq('organization_id', profile.organization_id);
+      if (error) {
+        console.error('❌ Milestones query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const handleDelete = async () => {
     if (!deleteRock) return;
-    const { error } = await supabase.from('rocks').delete().eq('id', deleteRock.id);
-    if (error) throw error;
-    toast.success("Rock deleted");
-    queryClient.invalidateQueries({ queryKey: ["rocks"] });
-    setDeleteRock(null);
+    
+    try {
+      console.log('🗑️ Deleting rock:', deleteRock.id);
+      const { error } = await supabase.from('rocks').delete().eq('id', deleteRock.id);
+      if (error) {
+        console.error('❌ Rock delete error:', error);
+        toast.error("Failed to delete rock: " + error.message);
+        return;
+      }
+      console.log('✅ Rock deleted successfully');
+      toast.success("Rock deleted");
+      queryClient.invalidateQueries({ queryKey: ["rocks"] });
+      setDeleteRock(null);
+    } catch (error) {
+      console.error('💥 Rock delete exception:', error);
+      toast.error("An error occurred: " + error.message);
+    }
   };
 
   if (isLoading) {
@@ -279,7 +356,13 @@ export default function Rocks() {
         </Card>
       )}
 
-      <RockFormDialog open={formOpen} onOpenChange={setFormOpen} rock={editRock} />
+      <RockFormDialog 
+        open={formOpen} 
+        onOpenChange={setFormOpen} 
+        rock={editRock} 
+        profile={profile}
+        user={user}
+      />
 
       <AlertDialog open={!!deleteRock} onOpenChange={() => setDeleteRock(null)}>
         <AlertDialogContent>
