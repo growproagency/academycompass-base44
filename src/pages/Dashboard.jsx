@@ -131,26 +131,19 @@ export default function Dashboard() {
         throw new Error(errorMsg);
       }
       
-      // Build explicit payload matching public.tasks columns
+      // Build explicit payload matching ACTUAL public.tasks columns ONLY
       const payload = {
-        // Required fields
         title: taskData.title,
+        description: taskData.description || null,
+        status: taskData.status || 'todo',
+        priority: taskData.priority || 'medium',
+        due_date: taskData.due_date || null,
         organization_id: profile.organization_id,
         created_by: authUser.id,
-        
-        // Optional fields (only include if present)
-        ...(taskData.description && { description: taskData.description }),
-        ...(taskData.notes && { notes: taskData.notes }),
-        ...(taskData.status && { status: taskData.status }),
-        ...(taskData.priority && { priority: taskData.priority }),
-        ...(taskData.due_date && { due_date: taskData.due_date }),
-        ...(taskData.rock_id && { rock_id: taskData.rock_id }),
-        ...(taskData.assignee_email && { assignee_email: taskData.assignee_email }),
-        ...(taskData.subtasks && { subtasks: taskData.subtasks }),
       };
       
-      console.log('📤 Dashboard: Explicit task insert payload (public.tasks columns):', payload);
-      console.log('🗂️ Payload keys:', Object.keys(payload));
+      console.log('📤 Dashboard: Final payload (public.tasks columns ONLY):', payload);
+      console.log('🗂️ Valid columns used:', Object.keys(payload));
       
       const { data, error } = await supabase.from('tasks').insert([payload]).select();
       
@@ -160,6 +153,7 @@ export default function Dashboard() {
         console.error('🔍 Error code:', error.code);
         console.error('🔍 Error details:', error.details);
         console.error('🔍 Error hint:', error.hint);
+        console.error('🔍 Error message:', error.message);
         toast.error(`Failed to create To-Do: ${error.message}`);
         throw error;
       }

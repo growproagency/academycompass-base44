@@ -166,26 +166,20 @@ export default function RockDetail() {
         throw new Error(errorMsg);
       }
       
-      // Build explicit payload matching public.tasks columns
+      // Build explicit payload matching ACTUAL public.tasks columns ONLY
       const payload = {
-        // Required fields
         title: taskData.title,
+        description: taskData.description || null,
+        status: taskData.status || 'todo',
+        priority: taskData.priority || 'medium',
+        due_date: taskData.due_date || null,
         organization_id: profile.organization_id,
         created_by: user.id,
-        rock_id: rockId,
-        
-        // Optional fields (only include if present)
-        ...(taskData.description && { description: taskData.description }),
-        ...(taskData.notes && { notes: taskData.notes }),
-        ...(taskData.status && { status: taskData.status }),
-        ...(taskData.priority && { priority: taskData.priority }),
-        ...(taskData.due_date && { due_date: taskData.due_date }),
-        ...(taskData.assignee_email && { assignee_email: taskData.assignee_email }),
-        ...(taskData.subtasks && { subtasks: taskData.subtasks }),
       };
       
-      console.log('📤 RockDetail: Explicit task insert payload (public.tasks columns):', payload);
-      console.log('🗂️ Payload keys:', Object.keys(payload));
+      console.log('📤 RockDetail: Final payload (public.tasks columns ONLY):', payload);
+      console.log('🗂️ Valid columns used:', Object.keys(payload));
+      console.log('⚠️ Note: rock_id not included (not a real column in public.tasks)');
       
       const { data, error } = await supabase.from('tasks').insert([payload]).select();
       
@@ -195,6 +189,7 @@ export default function RockDetail() {
         console.error('🔍 Error code:', error.code);
         console.error('🔍 Error details:', error.details);
         console.error('🔍 Error hint:', error.hint);
+        console.error('🔍 Error message:', error.message);
         toast.error(`Failed to create task: ${error.message}`);
         throw error;
       }
