@@ -46,50 +46,74 @@ export default function MyTasks() {
   const [editTask, setEditTask] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { user: authUser } = useAuth();
+  const { user, profile } = useAuth();
 
-  const { data: user } = useQuery({
-    queryKey: ["currentUser", authUser?.id],
-    queryFn: async () => {
-      if (!authUser) return null;
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
-      return data;
-    },
-    enabled: !!authUser,
+  console.log('🔍 MyTasks auth state:', {
+    hasUser: !!user,
+    userId: user?.id,
+    userEmail: user?.email,
+    hasProfile: !!profile,
+    organizationId: profile?.organization_id
   });
 
   const { data: allTasks = [], isLoading } = useQuery({
-    queryKey: ["my-tasks", authUser?.email],
+    queryKey: ["my-tasks", profile?.organization_id, user?.email],
     queryFn: async () => {
-      if (!authUser?.email) return [];
+      if (!profile?.organization_id || !user?.email) {
+        console.log('⚠️ Cannot fetch tasks: missing organization_id or user email');
+        return [];
+      }
+      console.log('📡 Fetching tasks for:', { 
+        organizationId: profile.organization_id, 
+        userEmail: user.email 
+      });
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
+        .eq('organization_id', profile.organization_id)
         .is('archived_at', null)
-        .or(`created_by.eq.${authUser.email},assignee_email.eq.${authUser.email}`);
+        .or(`assignee_email.eq.${user.email}`);
+      if (error) {
+        console.error('❌ Tasks query error:', error);
+        return [];
+      }
       return data || [];
     },
-    enabled: !!authUser?.email,
+    enabled: !!profile?.organization_id && !!user?.email,
   });
 
   const { data: rocks = [] } = useQuery({
-    queryKey: ["rocks"],
+    queryKey: ["rocks", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('rocks').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('rocks')
+        .select('*')
+        .eq('organization_id', profile.organization_id);
+      if (error) {
+        console.error('❌ Rocks query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const { data: users = [] } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["users", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('users').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('organization_id', profile.organization_id);
+      if (error) {
+        console.error('❌ Users query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const updateTask = useMutation({
@@ -110,13 +134,42 @@ export default function MyTasks() {
 
   const createTask = useMutation({
     mutationFn: async (taskData) => {
-      const { data, error } = await supabase.from('tasks').insert([taskData]).select();
-      if (error) throw error;
+      console.log('🆕 Create task mutation triggered');
+      console.log('👤 Authenticated user.id:', user?.id);
+      console.log('🏢 Profile organization_id:', profile?.organization_id);
+      
+      if (!profile?.organization_id) {
+        const errorMsg = 'Missing organization_id';
+        console.error('❌', errorMsg);
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+      
+      const payload = {
+        ...taskData,
+        organization_id: profile.organization_id,
+      };
+      
+      console.log('📤 Final task insert payload:', payload);
+      
+      const { data, error } = await supabase.from('tasks').insert([payload]).select();
+      
+      if (error) {
+        console.error('❌ Task insert error:', error);
+        console.error('📋 Failed payload was:', payload);
+        toast.error(`Failed to create To-Do: ${error.message}`);
+        throw error;
+      }
+      
+      console.log('✅ Task created successfully:', data[0]);
       return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
       toast.success("To-Do created");
+    },
+    onError: (error) => {
+      console.error('💥 Create task mutation failed:', error);
     },
   });
 
@@ -253,9 +306,16 @@ export default function MyTasks() {
         task={editTask}
         rocks={rocks}
         users={users}
+        user={user}
+        profile={profile}
         onSave={async (data) => {
-          await updateTask.mutateAsync({ id: editTask.id, data });
-          setEditTask(null);
+          console.log('💾 TaskDialog onSave (edit) called with data:', data);
+          try {
+            await updateTask.mutateAsync({ id: editTask.id, data });
+            setEditTask(null);
+          } catch (error) {
+            console.error('❌ Task update failed in onSave handler:', error);
+          }
         }}
       />
 
@@ -264,9 +324,17 @@ export default function MyTasks() {
         onOpenChange={setCreateOpen}
         rocks={rocks}
         users={users}
+        user={user}
+        profile={profile}
         onSave={async (data) => {
-          await createTask.mutateAsync(data);
-          setCreateOpen(false);
+          console.log('💾 TaskDialog onSave called with data:', data);
+          try {
+            await createTask.mutateAsync(data);
+            setCreateOpen(false);
+          } catch (error) {
+            console.error('❌ Task creation failed in onSave handler:', error);
+            // Dialog stays open on error
+          }
         }}
       />
     </div>
