@@ -497,6 +497,28 @@ export default function Dashboard() {
 
       {view === "todos" ? (
         <>
+          {/* DEBUG: Raw Tasks Panel */}
+          <Card className="p-4 bg-yellow-50 border-yellow-200">
+            <p className="text-xs font-semibold mb-2">🔍 DEBUG: Raw Tasks Data</p>
+            <div className="space-y-1 text-xs">
+              <p><strong>Total tasks fetched:</strong> {tasks.length}</p>
+              <p><strong>Filter value:</strong> "{filterStatus}"</p>
+              <p><strong>Filtered tasks:</strong> {filteredTasks.length}</p>
+              <p><strong>Status breakdown:</strong></p>
+              <ul className="ml-4 space-y-0.5">
+                <li>todo: {tasks.filter(t => t.status === 'todo').length}</li>
+                <li>in_progress: {tasks.filter(t => t.status === 'in_progress').length}</li>
+                <li>done: {tasks.filter(t => t.status === 'done').length}</li>
+              </ul>
+              <details className="mt-2">
+                <summary className="cursor-pointer font-semibold">View raw task statuses</summary>
+                <pre className="mt-1 text-[10px] max-h-40 overflow-auto bg-white p-2 rounded">
+                  {JSON.stringify(tasks.map(t => ({ id: t.id, title: t.title, status: t.status })), null, 2)}
+                </pre>
+              </details>
+            </div>
+          </Card>
+
           {/* Filters */}
           <div className="flex items-center gap-3">
             <Filter className="w-4 h-4 text-muted-foreground" />
