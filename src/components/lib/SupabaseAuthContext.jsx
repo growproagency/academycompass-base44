@@ -97,9 +97,20 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const isAuthorized = () => {
-    if (!profile) return false;
-    return profile.organization_id && 
-           (profile.status === 'approved' || profile.status === 'active');
+    if (!profile) {
+      console.log('⛔ Not authorized: No profile');
+      return false;
+    }
+    if (!profile.organization_id) {
+      console.log('⛔ Not authorized: No organization_id');
+      return false;
+    }
+    if (profile.status !== 'approved' && profile.status !== 'active') {
+      console.log('⛔ Not authorized: Status is', profile.status);
+      return false;
+    }
+    console.log('✅ User is authorized');
+    return true;
   };
 
   const isAdmin = () => {
@@ -108,6 +119,27 @@ export const AuthProvider = ({ children }) => {
 
   const navigateToLogin = () => {
     window.location.href = '/SignIn';
+  };
+
+  const signOut = async () => {
+    try {
+      console.log('🚪 Signing out...');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('❌ Sign out error:', error);
+        throw error;
+      }
+      console.log('✅ Sign out successful');
+      // Clear state
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      // Redirect to sign in
+      window.location.href = '/SignIn';
+    } catch (error) {
+      console.error('💥 Sign out failed:', error);
+      throw error;
+    }
   };
 
   return (
@@ -122,6 +154,7 @@ export const AuthProvider = ({ children }) => {
         isAuthorized,
         isAdmin,
         navigateToLogin,
+        signOut,
       }}
     >
       {children}

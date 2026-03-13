@@ -165,7 +165,16 @@ export default function Layout() {
               </p>
             </div>
             <button
-              onClick={() => supabase.auth.signOut()}
+              onClick={async () => {
+                try {
+                  const { signOut } = await import('@/components/lib/SupabaseAuthContext');
+                  console.log('🚪 Layout: Signing out...');
+                  await supabase.auth.signOut();
+                  window.location.href = '/SignIn';
+                } catch (error) {
+                  console.error('❌ Layout sign out error:', error);
+                }
+              }}
               className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
               title="Sign out"
             >

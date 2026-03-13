@@ -4,12 +4,17 @@ import { useAuth } from '@/components/lib/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, AlertCircle, LogOut, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function AccessPending() {
-  const { profile, user, authError } = useAuth();
+  const { profile, user, authError, signOut } = useAuth();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await signOut();
+    } catch (error) {
+      toast.error('Failed to sign out: ' + error.message);
+    }
   };
 
   // Handle case where profile doesn't exist at all
