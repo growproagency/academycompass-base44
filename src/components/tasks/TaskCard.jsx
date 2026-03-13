@@ -12,8 +12,9 @@ const PRIORITY_STYLES = {
 
 export default function TaskCard({ task, rockName, onClick, onStatusChange }) {
   const isOverdue = task.due_date && isPast(parseISO(task.due_date)) && task.status !== "done";
-  const subtasksDone = task.subtasks?.filter((s) => s.completed).length || 0;
-  const subtasksTotal = task.subtasks?.length || 0;
+  const subtasksArray = Array.isArray(task.subtasks) ? task.subtasks : [];
+  const subtasksDone = subtasksArray.filter((s) => s.completed).length;
+  const subtasksTotal = subtasksArray.length;
 
   return (
     <Card

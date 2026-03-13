@@ -56,6 +56,12 @@ export default function Dashboard() {
           assignee:assigned_to (
             id,
             full_name
+          ),
+          subtasks (
+            id,
+            title,
+            completed,
+            sort_order
           )
         `)
         .eq('organization_id', profile.organization_id);
@@ -241,8 +247,43 @@ export default function Dashboard() {
   const handleCreateTask = async (formData) => {
     console.log('💾 Dashboard: handleCreateTask called with data:', formData);
     try {
-      const result = await createTask.mutateAsync(formData);
-      console.log('✅ Dashboard: Task mutation completed, result:', result);
+      // Extract subtasks for separate handling
+      const { subtasks, ...taskData } = formData;
+      
+      console.log('📦 Dashboard: Task data:', taskData);
+      console.log('📋 Dashboard: Subtasks:', subtasks);
+      
+      // Create main task
+      const result = await createTask.mutateAsync(taskData);
+      console.log('✅ Dashboard: Task created:', result);
+      
+      // Create subtasks if any
+      if (subtasks && subtasks.length > 0) {
+        console.log('➕ Dashboard: Creating subtasks...');
+        const subtaskData = subtasks.map((st, idx) => ({
+          task_id: result.id,
+          title: st.title,
+          completed: st.completed || false,
+          sort_order: idx,
+          organization_id: profile.organization_id,
+        }));
+        
+        console.log('📤 Dashboard: Subtask insert payload:', subtaskData);
+        const { error: subtaskError } = await supabase
+          .from('subtasks')
+          .insert(subtaskData);
+        
+        if (subtaskError) {
+          console.error('❌ Dashboard: Subtask creation error:', subtaskError);
+          toast.error(`Task created but subtasks failed: ${subtaskError.message}`);
+        } else {
+          console.log('✅ Dashboard: Subtasks created');
+        }
+        
+        // Refresh to get subtasks
+        queryClient.invalidateQueries({ queryKey: ["tasks-active"] });
+      }
+      
       setCreateOpen(false);
       setEditingTask(null);
       console.log('🚪 Dashboard: Modal closed');
@@ -255,13 +296,113 @@ export default function Dashboard() {
   const handleUpdateTask = async (formData) => {
     if (!editingTask) return;
     console.log('📝 Dashboard: handleUpdateTask called for task:', editingTask.id);
+    console.log('📤 Dashboard: Update payload:', formData);
+    
     try {
-      await updateTask.mutateAsync({ id: editingTask.id, data: formData });
+      // Extract subtasks for separate handling
+      const { subtasks, ...taskData } = formData;
+      
+      console.log('📦 Dashboard: Main task data:', taskData);
+      console.log('📋 Dashboard: Subtasks to sync:', subtasks);
+      
+      // Update main task
+      const { data: updatedTask, error: taskError } = await supabase
+        .from('tasks')
+        .update(taskData)
+        .eq('id', editingTask.id)
+        .select()
+        .single();
+      
+      if (taskError) {
+        console.error('❌ Dashboard: Task update error:', taskError);
+        toast.error(`Update failed: ${taskError.message}`);
+        throw taskError;
+      }
+      
+      console.log('✅ Dashboard: Task updated:', updatedTask);
+      
+      // Sync subtasks
+      if (subtasks !== undefined) {
+        console.log('🔄 Dashboard: Syncing subtasks...');
+        
+        // Get existing subtasks
+        const { data: existingSubtasks, error: fetchError } = await supabase
+          .from('subtasks')
+          .select('id')
+          .eq('task_id', editingTask.id);
+        
+        if (fetchError) {
+          console.error('❌ Dashboard: Fetch existing subtasks error:', fetchError);
+        }
+        
+        const existingIds = new Set(existingSubtasks?.map(s => s.id) || []);
+        const currentIds = new Set(subtasks.filter(s => s.id).map(s => s.id));
+        
+        // Delete removed subtasks
+        const toDelete = [...existingIds].filter(id => !currentIds.has(id));
+        if (toDelete.length > 0) {
+          console.log('🗑️ Dashboard: Deleting subtasks:', toDelete);
+          const { error: deleteError } = await supabase
+            .from('subtasks')
+            .delete()
+            .in('id', toDelete);
+          
+          if (deleteError) {
+            console.error('❌ Dashboard: Delete subtasks error:', deleteError);
+          } else {
+            console.log('✅ Dashboard: Deleted subtasks');
+          }
+        }
+        
+        // Insert or update subtasks
+        for (let i = 0; i < subtasks.length; i++) {
+          const subtask = subtasks[i];
+          const subtaskData = {
+            task_id: editingTask.id,
+            title: subtask.title,
+            completed: subtask.completed || false,
+            sort_order: i,
+            organization_id: profile.organization_id,
+          };
+          
+          if (subtask.id && existingIds.has(subtask.id)) {
+            // Update existing
+            console.log('📝 Dashboard: Updating subtask:', subtask.id, subtaskData);
+            const { error: updateError } = await supabase
+              .from('subtasks')
+              .update(subtaskData)
+              .eq('id', subtask.id);
+            
+            if (updateError) {
+              console.error('❌ Dashboard: Update subtask error:', updateError);
+            }
+          } else {
+            // Insert new
+            console.log('➕ Dashboard: Inserting new subtask:', subtaskData);
+            const { error: insertError } = await supabase
+              .from('subtasks')
+              .insert([subtaskData]);
+            
+            if (insertError) {
+              console.error('❌ Dashboard: Insert subtask error:', insertError);
+            }
+          }
+        }
+        
+        console.log('✅ Dashboard: Subtasks synced');
+      }
+      
+      // Refresh task list
+      queryClient.invalidateQueries({ queryKey: ["tasks-active"] });
+      
       setCreateOpen(false);
       setEditingTask(null);
-      console.log('✅ Dashboard: Task updated and modal closed');
+      toast.success('To-Do updated');
+      console.log('✅ Dashboard: Update complete');
     } catch (error) {
       console.error('❌ Dashboard: Failed to update task:', error);
+      console.error('🔍 Dashboard: Error details:', error.message);
+      toast.error(`Failed to update: ${error.message}`);
     }
   };
 
