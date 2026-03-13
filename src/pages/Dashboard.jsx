@@ -34,9 +34,10 @@ import TaskDialog from "@/components/tasks/TaskDialog";
 
 export default function Dashboard() {
   const [view, setView] = useState("todos");
-  const [filterRock, setFilterRock] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [createOpen, setCreateOpen] = useState(false);
   const [createStatus, setCreateStatus] = useState("todo");
+  const [editingTask, setEditingTask] = useState(null);
   const queryClient = useQueryClient();
   const { user: authUser, profile } = useAuth();
 
