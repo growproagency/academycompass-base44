@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { isPast, parseISO, format } from "date-fns";
+import { toast } from "sonner";
 import StatCard from "@/components/dashboard/StatCard";
 import KanbanColumn from "@/components/dashboard/KanbanColumn";
 import TaskDialog from "@/components/tasks/TaskDialog";
@@ -112,7 +113,7 @@ export default function Dashboard() {
   const createTask = useMutation({
     mutationFn: async (taskData) => {
       console.log('🆕 Dashboard: Create task mutation triggered');
-      console.log('👤 Authenticated user.id:', user?.id);
+      console.log('👤 Authenticated user.id:', authUser?.id);
       console.log('🏢 Profile organization_id:', profile?.organization_id);
       
       if (!profile?.organization_id) {
@@ -240,7 +241,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Welcome back, {authUser?.user_metadata?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "there"}
+            Welcome back, {authUser?.user_metadata?.full_name?.split(" ")[0] || authUser?.email?.split("@")[0] || "there"}
           </p>
         </div>
         <Tabs value={view} onValueChange={setView}>
@@ -364,7 +365,7 @@ export default function Dashboard() {
         onOpenChange={setCreateOpen}
         rocks={rocks}
         users={users}
-        user={user}
+        user={authUser}
         profile={profile}
         defaultStatus={createStatus}
         onSave={handleCreateTask}
