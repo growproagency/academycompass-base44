@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/components/lib/supabaseClient";
 
 export default function TaskDialog({ open, onOpenChange, task, rocks, users, onSave, defaultStatus, user, profile }) {
   const [form, setForm] = useState({
@@ -104,13 +105,45 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
     setForm({ ...form, subtasks: [...form.subtasks, { title: "", completed: false }] });
   };
 
-  const updateSubtask = (idx, field, value) => {
+  const updateSubtask = async (idx, field, value) => {
     const updated = [...form.subtasks];
     updated[idx] = { ...updated[idx], [field]: value };
     setForm({ ...form, subtasks: updated });
+    
+    // If editing existing task and toggling completed, save immediately
+    if (task && field === 'completed' && updated[idx].id) {
+      console.log('☑️ TaskDialog: Toggling subtask completion:', updated[idx].id, value);
+      const { error } = await supabase
+        .from('subtasks')
+        .update({ completed: value })
+        .eq('id', updated[idx].id);
+      
+      if (error) {
+        console.error('❌ TaskDialog: Failed to update subtask:', error);
+      } else {
+        console.log('✅ TaskDialog: Subtask completion updated');
+      }
+    }
   };
 
-  const removeSubtask = (idx) => {
+  const removeSubtask = async (idx) => {
+    const subtaskToRemove = form.subtasks[idx];
+    
+    // If it has an id, delete from database
+    if (subtaskToRemove.id) {
+      console.log('🗑️ TaskDialog: Deleting subtask:', subtaskToRemove.id);
+      const { error } = await supabase
+        .from('subtasks')
+        .delete()
+        .eq('id', subtaskToRemove.id);
+      
+      if (error) {
+        console.error('❌ TaskDialog: Failed to delete subtask:', error);
+        return;
+      }
+      console.log('✅ TaskDialog: Subtask deleted');
+    }
+    
     setForm({ ...form, subtasks: form.subtasks.filter((_, i) => i !== idx) });
   };
 
