@@ -12,12 +12,26 @@ export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check for redirect reason from auth system
+    const reason = sessionStorage.getItem('auth_redirect_reason');
+    if (reason) {
+      sessionStorage.removeItem('auth_redirect_reason');
+      
+      if (reason === 'idle_timeout') {
+        setMessage({ type: 'info', text: 'Your session expired due to inactivity. Please sign in again.' });
+      } else if (reason === 'session_error' || reason === 'session_expired') {
+        setMessage({ type: 'info', text: 'Your session expired. Please sign in again.' });
+      }
+    }
+    
     // Check if already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
+        console.log('✅ User already has valid session, redirecting to Dashboard');
         navigate('/Dashboard');
       }
     });
@@ -67,6 +81,14 @@ export default function SignIn() {
           <CardDescription>Sign in to Academy Compass</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {message && (
+            <div className={`p-3 rounded-lg text-sm ${
+              message.type === 'info' ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20' : 
+              'bg-red-500/10 text-red-600 border border-red-500/20'
+            }`}>
+              {message.text}
+            </div>
+          )}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
