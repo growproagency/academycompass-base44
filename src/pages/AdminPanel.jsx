@@ -32,49 +32,97 @@ import { toast } from "sonner";
 
 export default function AdminPanel() {
   const queryClient = useQueryClient();
-  const { user: authUser } = useAuth();
+  const { profile, isLoadingAuth } = useAuth();
 
-  const { data: currentUser } = useQuery({
-    queryKey: ["currentUser", authUser?.id],
-    queryFn: async () => {
-      if (!authUser) return null;
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
-      return data;
-    },
-    enabled: !!authUser,
+  console.log('🔐 AdminPanel access check:', {
+    isLoadingAuth,
+    hasProfile: !!profile,
+    profileRole: profile?.role,
+    profileStatus: profile?.status,
+    organizationId: profile?.organization_id
   });
 
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ["admin-users"],
+  const { data: users = [], isLoading: usersLoading } = useQuery({
+    queryKey: ["admin-users", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('users').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('organization_id', profile.organization_id);
+      if (error) {
+        console.error('❌ Admin users query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ["all-tasks"],
+    queryKey: ["all-tasks", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('tasks').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('organization_id', profile.organization_id);
+      if (error) {
+        console.error('❌ Admin tasks query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const { data: rocks = [] } = useQuery({
-    queryKey: ["rocks"],
+    queryKey: ["rocks", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('rocks').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('rocks')
+        .select('*')
+        .eq('organization_id', profile.organization_id);
+      if (error) {
+        console.error('❌ Admin rocks query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
-  const isAdmin = currentUser?.role === "admin";
+  // Wait for auth initialization to complete
+  if (isLoadingAuth) {
+    console.log('⏳ AdminPanel: Waiting for auth initialization...');
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Check if profile exists
+  if (!profile) {
+    console.log('❌ AdminPanel: No profile found');
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Card className="p-8 text-center max-w-sm">
+          <Shield className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <h3 className="font-semibold">Profile Not Found</h3>
+          <p className="text-sm text-muted-foreground mt-1">Unable to load your profile.</p>
+        </Card>
+      </div>
+    );
+  }
+
+  // Check if user is admin (case-insensitive)
+  const isAdmin = profile.role?.toLowerCase() === 'admin';
+  console.log('👮 AdminPanel: Admin check result:', { isAdmin, profileRole: profile.role });
 
   if (!isAdmin) {
+    console.log('⛔ AdminPanel: Access denied - user is not admin');
     return (
       <div className="flex items-center justify-center h-full">
         <Card className="p-8 text-center max-w-sm">
@@ -86,13 +134,16 @@ export default function AdminPanel() {
     );
   }
 
-  if (isLoading) {
+  if (usersLoading) {
+    console.log('⏳ AdminPanel: Loading admin data...');
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
+
+  console.log('✅ AdminPanel: Admin access granted');
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
