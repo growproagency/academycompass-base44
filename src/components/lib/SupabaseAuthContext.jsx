@@ -276,7 +276,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAdmin = () => {
-    return profile?.role === 'admin';
+    const adminCheck = profile?.role?.toLowerCase() === 'admin';
+    console.log('🔑 isAdmin() check:', { 
+      hasProfile: !!profile, 
+      profileRole: profile?.role, 
+      result: adminCheck 
+    });
+    return adminCheck;
   };
 
   const navigateToLogin = () => {
