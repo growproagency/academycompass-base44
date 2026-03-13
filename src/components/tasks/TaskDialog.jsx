@@ -20,7 +20,7 @@ import {
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export default function TaskDialog({ open, onOpenChange, task, rocks, users, onSave, defaultStatus }) {
+export default function TaskDialog({ open, onOpenChange, task, rocks, users, onSave, defaultStatus, user, profile }) {
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -33,6 +33,15 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
     subtasks: [],
   });
   const [saving, setSaving] = useState(false);
+
+  console.log('📋 TaskDialog rendered with:', {
+    open,
+    hasTask: !!task,
+    hasUser: !!user,
+    hasProfile: !!profile,
+    userId: user?.id,
+    organizationId: profile?.organization_id
+  });
 
   useEffect(() => {
     if (open) {
@@ -66,23 +75,28 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('🔘 Create button clicked');
+    
     if (!form.title.trim()) {
       console.warn('⚠️ Task title is required');
       return;
     }
     
-    console.log('📤 Task form submission:', form);
+    console.log('📤 Task form submission started');
+    console.log('👤 Authenticated user.id:', user?.id);
+    console.log('🏢 Profile organization_id:', profile?.organization_id);
+    console.log('📋 Form data:', form);
+    
     setSaving(true);
     
     try {
       await onSave(form);
       console.log('✅ Task saved successfully');
       setSaving(false);
-      onOpenChange(false);
     } catch (error) {
       console.error('❌ Task save failed:', error);
       setSaving(false);
-      // Keep dialog open on error
+      // Keep dialog open on error so user can retry
     }
   };
 
