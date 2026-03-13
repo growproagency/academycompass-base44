@@ -66,11 +66,24 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title.trim()) return;
+    if (!form.title.trim()) {
+      console.warn('⚠️ Task title is required');
+      return;
+    }
+    
+    console.log('📤 Task form submission:', form);
     setSaving(true);
-    await onSave(form);
-    setSaving(false);
-    onOpenChange(false);
+    
+    try {
+      await onSave(form);
+      console.log('✅ Task saved successfully');
+      setSaving(false);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('❌ Task save failed:', error);
+      setSaving(false);
+      // Keep dialog open on error
+    }
   };
 
   const addSubtask = () => {
