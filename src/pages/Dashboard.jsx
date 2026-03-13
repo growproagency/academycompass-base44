@@ -37,80 +37,127 @@ export default function Dashboard() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createStatus, setCreateStatus] = useState("todo");
   const queryClient = useQueryClient();
-  const { user: authUser } = useAuth();
+  const { user: authUser, profile } = useAuth();
 
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
-    queryKey: ["tasks-active"],
+    queryKey: ["tasks-active", profile?.organization_id],
     queryFn: async () => {
+      if (!profile?.organization_id) return [];
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
+        .eq('organization_id', profile.organization_id)
         .is('archived_at', null);
+      if (error) {
+        console.error('❌ Tasks query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const { data: rocks = [] } = useQuery({
-    queryKey: ["rocks"],
+    queryKey: ["rocks", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('rocks').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('rocks')
+        .select('*')
+        .eq('organization_id', profile.organization_id);
+      if (error) {
+        console.error('❌ Rocks query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const { data: users = [] } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["users", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('users').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('organization_id', profile.organization_id);
+      if (error) {
+        console.error('❌ Users query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const { data: announcements = [] } = useQuery({
-    queryKey: ["announcements-pinned"],
+    queryKey: ["announcements-pinned", profile?.organization_id],
     queryFn: async () => {
+      if (!profile?.organization_id) return [];
       const { data, error } = await supabase
         .from('announcements')
         .select('*')
+        .eq('organization_id', profile.organization_id)
         .eq('is_pinned', true);
+      if (error) {
+        console.error('❌ Announcements query error:', error);
+        return [];
+      }
       return data || [];
     },
-  });
-
-  const { data: user } = useQuery({
-    queryKey: ["currentUser", authUser?.id],
-    queryFn: async () => {
-      if (!authUser) return null;
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
-      return data;
-    },
-    enabled: !!authUser,
+    enabled: !!profile?.organization_id,
   });
 
   const createTask = useMutation({
     mutationFn: async (taskData) => {
-      const { data, error } = await supabase.from('tasks').insert([taskData]).select();
-      if (error) throw error;
+      if (!profile?.organization_id) {
+        throw new Error('Missing organization ID');
+      }
+      
+      const payload = {
+        ...taskData,
+        organization_id: profile.organization_id,
+      };
+      
+      console.log('📤 Creating task:', payload);
+      const { data, error } = await supabase.from('tasks').insert([payload]).select();
+      if (error) {
+        console.error('❌ Task insert error:', error);
+        throw error;
+      }
+      console.log('✅ Task created successfully');
       return data[0];
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks-active"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks-active"] });
+    },
+    onError: (error) => {
+      console.error('💥 Create task mutation failed:', error);
+    },
   });
 
   const updateTask = useMutation({
     mutationFn: async ({ id, data: taskData }) => {
+      console.log('📤 Updating task:', id, taskData);
       const { data, error } = await supabase
         .from('tasks')
         .update(taskData)
         .eq('id', id)
         .select();
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Task update error:', error);
+        throw error;
+      }
+      console.log('✅ Task updated successfully');
       return data[0];
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks-active"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks-active"] });
+    },
+    onError: (error) => {
+      console.error('💥 Update task mutation failed:', error);
+    },
   });
 
   const rockMap = useMemo(() => new Map(rocks.map((r) => [r.id, r.name])), [rocks]);
@@ -137,7 +184,12 @@ export default function Dashboard() {
   };
 
   const handleCreateTask = async (formData) => {
-    await createTask.mutateAsync(formData);
+    try {
+      await createTask.mutateAsync(formData);
+    } catch (error) {
+      console.error('❌ Failed to create task:', error);
+      throw error;
+    }
   };
 
   if (tasksLoading) {
