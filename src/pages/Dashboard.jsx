@@ -207,10 +207,10 @@ export default function Dashboard() {
 
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
-      if (filterRock !== "all" && t.rock_id !== filterRock) return false;
+      if (filterStatus !== "all" && t.status !== filterStatus) return false;
       return true;
     });
-  }, [tasks, filterRock]);
+  }, [tasks, filterStatus]);
 
   const getColumnTasks = (status) => {
     const statusTasks = filteredTasks.filter((t) => t.status === status);
@@ -236,11 +236,31 @@ export default function Dashboard() {
       const result = await createTask.mutateAsync(formData);
       console.log('✅ Dashboard: Task mutation completed, result:', result);
       setCreateOpen(false);
+      setEditingTask(null);
       console.log('🚪 Dashboard: Modal closed');
     } catch (error) {
       console.error('❌ Dashboard: Failed to create task:', error);
       // Dialog stays open on error so user can retry
     }
+  };
+
+  const handleUpdateTask = async (formData) => {
+    if (!editingTask) return;
+    console.log('📝 Dashboard: handleUpdateTask called for task:', editingTask.id);
+    try {
+      await updateTask.mutateAsync({ id: editingTask.id, data: formData });
+      setCreateOpen(false);
+      setEditingTask(null);
+      console.log('✅ Dashboard: Task updated and modal closed');
+    } catch (error) {
+      console.error('❌ Dashboard: Failed to update task:', error);
+    }
+  };
+
+  const handleTaskClick = (task) => {
+    console.log('🖱️ Dashboard: Task clicked:', task.id);
+    setEditingTask(task);
+    setCreateOpen(true);
   };
 
   if (tasksLoading) {
@@ -304,21 +324,21 @@ export default function Dashboard() {
           {/* Filters */}
           <div className="flex items-center gap-3">
             <Filter className="w-4 h-4 text-muted-foreground" />
-            <Select value={filterRock} onValueChange={setFilterRock}>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-[180px] h-8 text-xs">
-                <SelectValue placeholder="All Rocks" />
+                <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Rocks</SelectItem>
-                {rocks.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-                ))}
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="todo">To Do</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="done">Done</SelectItem>
               </SelectContent>
             </Select>
             <Button
               size="sm"
               className="ml-auto h-8 text-xs"
-              onClick={() => { setCreateStatus("todo"); setCreateOpen(true); }}
+              onClick={() => { setEditingTask(null); setCreateStatus("todo"); setCreateOpen(true); }}
             >
               <Plus className="w-3.5 h-3.5 mr-1" /> New To-Do
             </Button>
@@ -332,8 +352,9 @@ export default function Dashboard() {
                 status={status}
                 tasks={getColumnTasks(status)}
                 rockMap={rockMap}
+                onTaskClick={handleTaskClick}
                 onStatusChange={handleStatusChange}
-                onCreateClick={() => { setCreateStatus(status); setCreateOpen(true); }}
+                onCreateClick={() => { setEditingTask(null); setCreateStatus(status); setCreateOpen(true); }}
               />
             ))}
           </div>
@@ -397,13 +418,17 @@ export default function Dashboard() {
 
       <TaskDialog
         open={createOpen}
-        onOpenChange={setCreateOpen}
+        onOpenChange={(open) => {
+          setCreateOpen(open);
+          if (!open) setEditingTask(null);
+        }}
+        task={editingTask}
         rocks={rocks}
         users={users}
         user={authUser}
         profile={profile}
         defaultStatus={createStatus}
-        onSave={handleCreateTask}
+        onSave={editingTask ? handleUpdateTask : handleCreateTask}
       />
     </div>
   );

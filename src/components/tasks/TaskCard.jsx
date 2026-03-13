@@ -73,6 +73,16 @@ export default function TaskCard({ task, rockName, onClick, onStatusChange }) {
               </Badge>
             )}
 
+            {task.assignee_email ? (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground">
+                {task.assignee_email.split('@')[0]}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground/60">
+                Unassigned
+              </Badge>
+            )}
+
             {subtasksTotal > 0 && (
               <span className="text-[10px] text-muted-foreground">
                 {subtasksDone}/{subtasksTotal}
