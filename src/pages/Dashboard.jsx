@@ -50,12 +50,11 @@ export default function Dashboard() {
       }
       console.log('📡 Dashboard: Fetching tasks for organization:', profile.organization_id);
       
-      // First, try simple query like sidebar does
+      // Simple query matching sidebar
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('organization_id', profile.organization_id)
-        .is('archived_at', null);
+        .eq('organization_id', profile.organization_id);
       
       if (error) {
         console.error('❌ Dashboard: Tasks query error:', error);
@@ -93,9 +92,8 @@ export default function Dashboard() {
           // Fetch subtasks
           const { data: subtasksData } = await supabase
             .from('subtasks')
-            .select('id, title, completed, sort_order')
-            .eq('task_id', task.id)
-            .order('sort_order');
+            .select('id, title, completed')
+            .eq('task_id', task.id);
           
           return {
             ...task,
@@ -313,12 +311,10 @@ export default function Dashboard() {
       // Create subtasks if any
       if (subtasks && subtasks.length > 0) {
         console.log('➕ Dashboard: Creating subtasks...');
-        const subtaskData = subtasks.map((st, idx) => ({
+        const subtaskData = subtasks.map((st) => ({
           task_id: result.id,
           title: st.title,
           completed: st.completed || false,
-          sort_order: idx,
-          organization_id: profile.organization_id,
         }));
         
         console.log('📤 Dashboard: Subtask insert payload:', subtaskData);
@@ -414,8 +410,6 @@ export default function Dashboard() {
             task_id: editingTask.id,
             title: subtask.title,
             completed: subtask.completed || false,
-            sort_order: i,
-            organization_id: profile.organization_id,
           };
           
           if (subtask.id && existingIds.has(subtask.id)) {
