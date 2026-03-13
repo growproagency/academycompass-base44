@@ -48,62 +48,88 @@ export default function Dashboard() {
         console.log('⚠️ Dashboard: Cannot fetch tasks - no organization_id');
         return [];
       }
+      
       console.log('📡 Dashboard: Fetching tasks for organization:', profile.organization_id);
       
-      // Simple query matching sidebar
-      const { data, error } = await supabase
+      // Step 1: Fetch tasks (only real public.tasks columns)
+      const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
-        .select('*')
+        .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to, repeat')
         .eq('organization_id', profile.organization_id);
       
-      if (error) {
-        console.error('❌ Dashboard: Tasks query error:', error);
+      if (tasksError) {
+        console.error('❌ Dashboard: Tasks query failed:', tasksError);
         console.error('🔍 Dashboard: Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
+          message: tasksError.message,
+          code: tasksError.code,
+          details: tasksError.details,
+          hint: tasksError.hint
         });
         return [];
       }
       
-      console.log('✅ Dashboard: Raw tasks fetched from Supabase:', data?.length || 0, 'tasks');
-      console.log('📊 Dashboard: Raw task statuses:', data?.map(t => ({ id: t.id, status: t.status, title: t.title })));
+      console.log('✅ Dashboard: Raw tasks fetched:', tasksData?.length || 0);
+      console.log('📊 Dashboard: Task statuses breakdown:', {
+        todo: tasksData?.filter(t => t.status === 'todo').length || 0,
+        in_progress: tasksData?.filter(t => t.status === 'in_progress').length || 0,
+        done: tasksData?.filter(t => t.status === 'done').length || 0
+      });
       
-      if (!data || data.length === 0) {
-        console.warn('⚠️ Dashboard: No tasks returned from query');
+      if (!tasksData || tasksData.length === 0) {
+        console.log('ℹ️ Dashboard: No tasks found for organization');
         return [];
       }
       
-      // Now fetch related data for each task
-      const tasksWithRelations = await Promise.all(
-        data.map(async (task) => {
-          // Fetch assignee if assigned_to exists
-          let assignee = null;
-          if (task.assigned_to) {
-            const { data: assigneeData } = await supabase
-              .from('profiles')
-              .select('id, full_name')
-              .eq('id', task.assigned_to)
-              .maybeSingle();
-            assignee = assigneeData;
-          }
-          
-          // Fetch subtasks
-          const { data: subtasksData } = await supabase
-            .from('subtasks')
-            .select('id, title, completed')
-            .eq('task_id', task.id);
-          
-          return {
-            ...task,
-            assignee,
-            subtasks: subtasksData || []
-          };
-        })
-      );
+      // Step 2: Fetch all assignees for this org (batch query is more efficient)
+      const assigneeIds = [...new Set(tasksData.map(t => t.assigned_to).filter(Boolean))];
+      let assigneesMap = new Map();
       
-      console.log('✅ Dashboard: Tasks with relations:', tasksWithRelations.length);
+      if (assigneeIds.length > 0) {
+        const { data: assigneesData, error: assigneesError } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', assigneeIds);
+        
+        if (assigneesError) {
+          console.error('❌ Dashboard: Assignees query error:', assigneesError);
+        } else {
+          console.log('✅ Dashboard: Assignees fetched:', assigneesData?.length || 0);
+          assigneesData?.forEach(a => assigneesMap.set(a.id, a));
+        }
+      }
+      
+      // Step 3: Fetch all subtasks for these tasks (batch query)
+      const taskIds = tasksData.map(t => t.id);
+      const { data: subtasksData, error: subtasksError } = await supabase
+        .from('subtasks')
+        .select('id, task_id, title, completed')
+        .in('task_id', taskIds);
+      
+      if (subtasksError) {
+        console.error('❌ Dashboard: Subtasks query error:', subtasksError);
+      } else {
+        console.log('✅ Dashboard: Subtasks fetched:', subtasksData?.length || 0);
+      }
+      
+      // Step 4: Group subtasks by task_id
+      const subtasksByTaskId = new Map();
+      subtasksData?.forEach(st => {
+        if (!subtasksByTaskId.has(st.task_id)) {
+          subtasksByTaskId.set(st.task_id, []);
+        }
+        subtasksByTaskId.get(st.task_id).push(st);
+      });
+      
+      // Step 5: Combine everything
+      const tasksWithRelations = tasksData.map(task => ({
+        ...task,
+        assignee: task.assigned_to ? assigneesMap.get(task.assigned_to) : null,
+        subtasks: subtasksByTaskId.get(task.id) || []
+      }));
+      
+      console.log('✅ Dashboard: Final tasks with relations:', tasksWithRelations.length);
+      console.log('📋 Dashboard: Sample task:', tasksWithRelations[0]);
+      
       return tasksWithRelations;
     },
     enabled: !!profile?.organization_id,
@@ -311,22 +337,27 @@ export default function Dashboard() {
       // Create subtasks if any
       if (subtasks && subtasks.length > 0) {
         console.log('➕ Dashboard: Creating subtasks...');
-        const subtaskData = subtasks.map((st) => ({
-          task_id: result.id,
-          title: st.title,
-          completed: st.completed || false,
-        }));
+        // Only use real public.subtasks columns: id, task_id, title, completed, created_at
+        const subtaskData = subtasks
+          .filter(st => st.title && st.title.trim())
+          .map((st) => ({
+            task_id: result.id,
+            title: st.title.trim(),
+            completed: st.completed || false,
+          }));
         
-        console.log('📤 Dashboard: Subtask insert payload:', subtaskData);
-        const { error: subtaskError } = await supabase
-          .from('subtasks')
-          .insert(subtaskData);
-        
-        if (subtaskError) {
-          console.error('❌ Dashboard: Subtask creation error:', subtaskError);
-          toast.error(`Task created but subtasks failed: ${subtaskError.message}`);
-        } else {
-          console.log('✅ Dashboard: Subtasks created');
+        if (subtaskData.length > 0) {
+          console.log('📤 Dashboard: Subtask insert payload:', subtaskData);
+          const { error: subtaskError } = await supabase
+            .from('subtasks')
+            .insert(subtaskData);
+          
+          if (subtaskError) {
+            console.error('❌ Dashboard: Subtask creation error:', subtaskError);
+            toast.error(`Task created but subtasks failed: ${subtaskError.message}`);
+          } else {
+            console.log('✅ Dashboard: Subtasks created');
+          }
         }
         
         // Refresh to get subtasks
@@ -374,10 +405,10 @@ export default function Dashboard() {
       if (subtasks !== undefined) {
         console.log('🔄 Dashboard: Syncing subtasks...');
         
-        // Get existing subtasks
+        // Get existing subtasks (only real columns)
         const { data: existingSubtasks, error: fetchError } = await supabase
           .from('subtasks')
-          .select('id')
+          .select('id, task_id, title, completed')
           .eq('task_id', editingTask.id);
         
         if (fetchError) {
@@ -403,18 +434,19 @@ export default function Dashboard() {
           }
         }
         
-        // Insert or update subtasks
-        for (let i = 0; i < subtasks.length; i++) {
-          const subtask = subtasks[i];
+        // Insert or update subtasks (only real public.subtasks columns)
+        for (const subtask of subtasks) {
+          if (!subtask.title || !subtask.title.trim()) continue;
+          
           const subtaskData = {
             task_id: editingTask.id,
-            title: subtask.title,
+            title: subtask.title.trim(),
             completed: subtask.completed || false,
           };
           
           if (subtask.id && existingIds.has(subtask.id)) {
             // Update existing
-            console.log('📝 Dashboard: Updating subtask:', subtask.id, subtaskData);
+            console.log('📝 Dashboard: Updating subtask:', subtask.id);
             const { error: updateError } = await supabase
               .from('subtasks')
               .update(subtaskData)
@@ -424,8 +456,8 @@ export default function Dashboard() {
               console.error('❌ Dashboard: Update subtask error:', updateError);
             }
           } else {
-            // Insert new
-            console.log('➕ Dashboard: Inserting new subtask:', subtaskData);
+            // Insert new (no id or id not in existing)
+            console.log('➕ Dashboard: Inserting new subtask');
             const { error: insertError } = await supabase
               .from('subtasks')
               .insert([subtaskData]);
