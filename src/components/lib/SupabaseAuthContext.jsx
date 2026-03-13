@@ -35,23 +35,20 @@ export const AuthProvider = ({ children }) => {
           console.log('🔍 Querying profiles table with auth_user_id:', session.user.id);
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('*, organizations(*)')
+            .select('*')
             .eq('auth_user_id', session.user.id)
-            .single();
+            .maybeSingle();
 
           console.log('📊 Profile query result:', { profileData, profileError });
 
           if (profileError) {
             console.error('❌ Profile fetch error:', profileError);
-            // Profile doesn't exist or query blocked - set profile to null
-            // This will redirect to AccessPending via ProtectedRoute
             setProfile(null);
           } else if (profileData) {
             console.log('✅ Profile loaded successfully:', profileData);
             setProfile(profileData);
           } else {
-            // Query succeeded but returned no data
-            console.warn('⚠️ Profile query returned no data');
+            console.warn('⚠️ No profile found for this user');
             setProfile(null);
           }
         }
@@ -75,18 +72,21 @@ export const AuthProvider = ({ children }) => {
         console.log('🔍 Re-querying profile after auth change, user ID:', session.user.id);
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('*, organizations(*)')
+          .select('*')
           .eq('auth_user_id', session.user.id)
-          .single();
+          .maybeSingle();
 
         console.log('📊 Profile re-query result:', { profileData, profileError });
 
         if (profileError) {
           console.error('❌ Profile fetch error on auth change:', profileError);
           setProfile(null);
-        } else {
+        } else if (profileData) {
           console.log('✅ Profile updated:', profileData);
-          setProfile(profileData || null);
+          setProfile(profileData);
+        } else {
+          console.warn('⚠️ No profile found after auth change');
+          setProfile(null);
         }
       } else {
         setProfile(null);
