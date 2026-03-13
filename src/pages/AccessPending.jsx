@@ -3,14 +3,58 @@ import { supabase } from '@/components/lib/supabaseClient';
 import { useAuth } from '@/components/lib/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, AlertCircle, LogOut } from 'lucide-react';
+import { Clock, AlertCircle, LogOut, XCircle } from 'lucide-react';
 
 export default function AccessPending() {
-  const { profile, user } = useAuth();
+  const { profile, user, authError } = useAuth();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
+
+  // Handle case where profile doesn't exist at all
+  if (!profile && user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader className="space-y-3 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+              <XCircle className="w-6 h-6 text-red-600" />
+            </div>
+            <CardTitle className="text-2xl">Profile Not Found</CardTitle>
+            <CardDescription>
+              No profile exists for your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-muted rounded-lg p-4 space-y-2 text-sm">
+              <p><strong>Email:</strong> {user?.email}</p>
+            </div>
+            
+            <div className="text-sm text-muted-foreground space-y-2">
+              <p>Your account has been authenticated, but no profile was found in the system.</p>
+              <p>Please contact your administrator to set up your access.</p>
+            </div>
+
+            {authError && (
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+                <p className="text-sm text-destructive">Error: {authError.message}</p>
+              </div>
+            )}
+
+            <Button 
+              onClick={handleSignOut} 
+              variant="outline" 
+              className="w-full"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const isPending = profile?.status === 'pending';
   const isRejected = profile?.status === 'rejected';
