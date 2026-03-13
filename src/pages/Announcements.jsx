@@ -44,35 +44,36 @@ export default function Announcements() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const queryClient = useQueryClient();
-  const { user: authUser } = useAuth();
+  const { user, profile } = useAuth();
 
-  const { data: user } = useQuery({
-    queryKey: ["currentUser", authUser?.id],
-    queryFn: async () => {
-      if (!authUser) return null;
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
-      return data;
-    },
-    enabled: !!authUser,
+  console.log('🔍 Announcements auth state:', {
+    hasUser: !!user,
+    hasProfile: !!profile,
+    organizationId: profile?.organization_id,
+    role: profile?.role
   });
 
   const { data: announcements = [], isLoading } = useQuery({
-    queryKey: ["announcements"],
+    queryKey: ["announcements", profile?.organization_id],
     queryFn: async () => {
+      if (!profile?.organization_id) return [];
       const { data, error } = await supabase
         .from('announcements')
         .select('*')
+        .eq('organization_id', profile.organization_id)
         .order('created_date', { ascending: false });
+      if (error) {
+        console.error('❌ Announcements query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = profile?.role?.toLowerCase() === "admin";
 
   const openCreate = () => {
     setEditAnn(null);
@@ -89,44 +90,106 @@ export default function Announcements() {
   };
 
   const handleSave = async () => {
-    if (!title.trim() || !body.trim()) return;
-    setSaving(true);
-    if (editAnn) {
-      const { error } = await supabase
-        .from('announcements')
-        .update({ title: title.trim(), body: body.trim() })
-        .eq('id', editAnn.id);
-      if (error) throw error;
-      toast.success("Announcement updated");
-    } else {
-      const { error } = await supabase
-        .from('announcements')
-        .insert([{ title: title.trim(), body: body.trim() }]);
-      if (error) throw error;
-      toast.success("Announcement posted");
+    console.log('🔘 Announcements: Save button clicked');
+    if (!title.trim() || !body.trim()) {
+      toast.error("Title and body are required");
+      return;
     }
-    queryClient.invalidateQueries({ queryKey: ["announcements"] });
-    setSaving(false);
-    setFormOpen(false);
+    
+    if (!profile?.organization_id) {
+      toast.error("Missing organization ID");
+      console.error('❌ Cannot save announcement: no organization_id');
+      return;
+    }
+    
+    setSaving(true);
+    
+    try {
+      if (editAnn) {
+        console.log('📤 Announcements: Updating announcement:', editAnn.id);
+        const { error } = await supabase
+          .from('announcements')
+          .update({ title: title.trim(), body: body.trim() })
+          .eq('id', editAnn.id);
+        if (error) {
+          console.error('❌ Announcements: Update error:', error);
+          toast.error(`Failed to update: ${error.message}`);
+          setSaving(false);
+          return;
+        }
+        console.log('✅ Announcements: Updated successfully');
+        toast.success("Announcement updated");
+      } else {
+        const payload = {
+          title: title.trim(),
+          body: body.trim(),
+          organization_id: profile.organization_id,
+        };
+        console.log('📤 Announcements: Creating announcement:', payload);
+        const { error } = await supabase.from('announcements').insert([payload]);
+        if (error) {
+          console.error('❌ Announcements: Insert error:', error);
+          console.error('📋 Failed payload:', payload);
+          toast.error(`Failed to create: ${error.message}`);
+          setSaving(false);
+          return;
+        }
+        console.log('✅ Announcements: Created successfully');
+        toast.success("Announcement posted");
+      }
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      setSaving(false);
+      setFormOpen(false);
+    } catch (error) {
+      console.error('💥 Announcements: Save exception:', error);
+      toast.error(`Error: ${error.message}`);
+      setSaving(false);
+    }
   };
 
   const togglePin = async (ann) => {
-    const { error } = await supabase
-      .from('announcements')
-      .update({ is_pinned: !ann.is_pinned })
-      .eq('id', ann.id);
-    if (error) throw error;
-    queryClient.invalidateQueries({ queryKey: ["announcements"] });
-    toast.success(ann.is_pinned ? "Unpinned" : "Pinned");
+    console.log('🔘 Announcements: Toggle pin clicked:', ann.id);
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .update({ is_pinned: !ann.is_pinned })
+        .eq('id', ann.id);
+      if (error) {
+        console.error('❌ Announcements: Toggle pin error:', error);
+        toast.error(`Failed to ${ann.is_pinned ? 'unpin' : 'pin'}: ${error.message}`);
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      toast.success(ann.is_pinned ? "Unpinned" : "Pinned");
+    } catch (error) {
+      console.error('💥 Announcements: Toggle pin exception:', error);
+      toast.error(`Error: ${error.message}`);
+    }
   };
 
   const handleDelete = async () => {
+    console.log('🔘 Announcements: Delete confirmed');
     if (!deleteAnn) return;
-    const { error } = await supabase.from('announcements').delete().eq('id', deleteAnn.id);
-    if (error) throw error;
-    queryClient.invalidateQueries({ queryKey: ["announcements"] });
-    toast.success("Announcement deleted");
-    setDeleteAnn(null);
+    
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('announcements').delete().eq('id', deleteAnn.id);
+      if (error) {
+        console.error('❌ Announcements: Delete error:', error);
+        toast.error(`Failed to delete: ${error.message}`);
+        setDeleting(false);
+        return;
+      }
+      console.log('✅ Announcements: Deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      toast.success("Announcement deleted");
+      setDeleteAnn(null);
+    } catch (error) {
+      console.error('💥 Announcements: Delete exception:', error);
+      toast.error(`Error: ${error.message}`);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (isLoading) {
@@ -228,7 +291,10 @@ export default function Announcements() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { supabase } from "@/components/lib/supabaseClient";
+import { useAuth } from "@/components/lib/SupabaseAuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -36,7 +37,17 @@ export default function RockDetail() {
   const rockId = urlParams.get("id");
   const [createOpen, setCreateOpen] = useState(false);
   const [newMilestone, setNewMilestone] = useState("");
+  const [addingMilestone, setAddingMilestone] = useState(false);
   const queryClient = useQueryClient();
+  const { user, profile } = useAuth();
+
+  console.log('🔍 RockDetail auth state:', {
+    hasUser: !!user,
+    userId: user?.id,
+    hasProfile: !!profile,
+    organizationId: profile?.organization_id,
+    rockId
+  });
 
   const { data: rock, isLoading: rockLoading } = useQuery({
     queryKey: ["rock", rockId],
@@ -77,82 +88,189 @@ export default function RockDetail() {
   });
 
   const { data: rocks = [] } = useQuery({
-    queryKey: ["rocks"],
+    queryKey: ["rocks", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('rocks').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('rocks')
+        .select('*')
+        .eq('organization_id', profile.organization_id);
+      if (error) {
+        console.error('❌ Rocks query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const { data: users = [] } = useQuery({
-    queryKey: ["users"],
+    queryKey: ["users", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('users').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('organization_id', profile.organization_id);
+      if (error) {
+        console.error('❌ Users query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const rockMap = useMemo(() => new Map(rocks.map((r) => [r.id, r.name])), [rocks]);
 
   const updateTask = useMutation({
     mutationFn: async ({ id, data: taskData }) => {
+      console.log('📤 RockDetail: Updating task:', id, taskData);
       const { data, error } = await supabase
         .from('tasks')
         .update(taskData)
         .eq('id', id)
         .select();
-      if (error) throw error;
+      if (error) {
+        console.error('❌ RockDetail: Task update error:', error);
+        toast.error(`Failed to update task: ${error.message}`);
+        throw error;
+      }
       return data[0];
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rock-tasks", rockId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rock-tasks", rockId] });
+      toast.success("Task updated");
+    },
   });
 
   const createTask = useMutation({
     mutationFn: async (taskData) => {
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert([{ ...taskData, rock_id: rockId }])
-        .select();
-      if (error) throw error;
+      console.log('🆕 RockDetail: Creating task');
+      console.log('👤 User.id:', user?.id);
+      console.log('🏢 Organization ID:', profile?.organization_id);
+      
+      if (!profile?.organization_id) {
+        const errorMsg = 'Missing organization_id';
+        console.error('❌', errorMsg);
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+      
+      const payload = {
+        ...taskData,
+        rock_id: rockId,
+        organization_id: profile.organization_id,
+      };
+      
+      console.log('📤 RockDetail: Task insert payload:', payload);
+      
+      const { data, error } = await supabase.from('tasks').insert([payload]).select();
+      
+      if (error) {
+        console.error('❌ RockDetail: Task insert error:', error);
+        console.error('📋 Failed payload:', payload);
+        toast.error(`Failed to create task: ${error.message}`);
+        throw error;
+      }
+      
+      console.log('✅ RockDetail: Task created successfully');
       return data[0];
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rock-tasks", rockId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rock-tasks", rockId] });
+      toast.success("Task created");
+    },
   });
 
   const createMilestone = useMutation({
     mutationFn: async (milestoneData) => {
-      const { data, error } = await supabase.from('milestones').insert([milestoneData]).select();
-      if (error) throw error;
+      console.log('🆕 RockDetail: Creating milestone');
+      
+      if (!profile?.organization_id) {
+        const errorMsg = 'Missing organization_id';
+        console.error('❌', errorMsg);
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+      
+      const payload = {
+        ...milestoneData,
+        organization_id: profile.organization_id,
+      };
+      
+      console.log('📤 RockDetail: Milestone insert payload:', payload);
+      
+      const { data, error } = await supabase.from('milestones').insert([payload]).select();
+      
+      if (error) {
+        console.error('❌ RockDetail: Milestone insert error:', error);
+        toast.error(`Failed to create milestone: ${error.message}`);
+        throw error;
+      }
+      
+      console.log('✅ RockDetail: Milestone created successfully');
       return data[0];
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rock-milestones", rockId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rock-milestones", rockId] });
+      toast.success("Milestone added");
+    },
   });
 
   const toggleMilestone = useMutation({
     mutationFn: async ({ id, completed_at }) => {
+      console.log('📤 RockDetail: Toggling milestone:', id);
       const { data, error } = await supabase
         .from('milestones')
         .update({ completed_at })
         .eq('id', id)
         .select();
-      if (error) throw error;
+      if (error) {
+        console.error('❌ RockDetail: Milestone toggle error:', error);
+        toast.error(`Failed to update milestone: ${error.message}`);
+        throw error;
+      }
       return data[0];
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rock-milestones", rockId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rock-milestones", rockId] });
+    },
   });
 
   const deleteMilestone = useMutation({
     mutationFn: async (id) => {
+      console.log('🗑️ RockDetail: Deleting milestone:', id);
       const { error } = await supabase.from('milestones').delete().eq('id', id);
-      if (error) throw error;
+      if (error) {
+        console.error('❌ RockDetail: Milestone delete error:', error);
+        toast.error(`Failed to delete milestone: ${error.message}`);
+        throw error;
+      }
+      console.log('✅ RockDetail: Milestone deleted successfully');
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["rock-milestones", rockId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rock-milestones", rockId] });
+      toast.success("Milestone deleted");
+    },
   });
 
-  const handleAddMilestone = () => {
-    if (!newMilestone.trim()) return;
-    createMilestone.mutate({ rock_id: rockId, title: newMilestone.trim() });
-    setNewMilestone("");
+  const handleAddMilestone = async () => {
+    console.log('🔘 RockDetail: Add milestone button clicked');
+    if (!newMilestone.trim()) {
+      toast.error("Milestone title is required");
+      return;
+    }
+    
+    setAddingMilestone(true);
+    try {
+      await createMilestone.mutateAsync({ rock_id: rockId, title: newMilestone.trim() });
+      setNewMilestone("");
+    } catch (error) {
+      console.error('💥 RockDetail: Add milestone failed:', error);
+    } finally {
+      setAddingMilestone(false);
+    }
   };
 
   const getColumnTasks = (status) => tasks.filter((t) => t.status === status);
@@ -262,8 +380,8 @@ export default function RockDetail() {
             className="h-8 text-sm"
             onKeyDown={(e) => e.key === "Enter" && handleAddMilestone()}
           />
-          <Button size="sm" className="h-8" onClick={handleAddMilestone}>
-            <Plus className="w-3.5 h-3.5" />
+          <Button size="sm" className="h-8" onClick={handleAddMilestone} disabled={addingMilestone}>
+            {addingMilestone ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
           </Button>
         </div>
       </Card>
@@ -292,10 +410,18 @@ export default function RockDetail() {
         onOpenChange={setCreateOpen}
         rocks={rocks}
         users={users}
+        user={user}
+        profile={profile}
         defaultStatus="todo"
         onSave={async (data) => {
-          await createTask.mutateAsync(data);
-          setCreateOpen(false);
+          console.log('💾 RockDetail: TaskDialog onSave called');
+          try {
+            await createTask.mutateAsync(data);
+            setCreateOpen(false);
+          } catch (error) {
+            console.error('❌ RockDetail: Task creation failed:', error);
+            // Dialog stays open on error
+          }
         }}
       />
     </div>
