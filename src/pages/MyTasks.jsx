@@ -134,7 +134,8 @@ export default function MyTasks() {
 
   const createTask = useMutation({
     mutationFn: async (taskData) => {
-      console.log('🆕 Create task mutation triggered');
+      console.log('🆕 MyTasks: Create task mutation triggered');
+      console.log('📋 Raw form data received:', taskData);
       console.log('👤 Authenticated user.id:', user?.id);
       console.log('🏢 Profile organization_id:', profile?.organization_id);
       
@@ -145,23 +146,47 @@ export default function MyTasks() {
         throw new Error(errorMsg);
       }
       
+      if (!user?.id) {
+        const errorMsg = 'Missing authenticated user.id';
+        console.error('❌', errorMsg);
+        toast.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+      
+      // Build explicit payload matching public.tasks columns
       const payload = {
-        ...taskData,
+        // Required fields
+        title: taskData.title,
         organization_id: profile.organization_id,
+        created_by: user.id,
+        
+        // Optional fields (only include if present)
+        ...(taskData.description && { description: taskData.description }),
+        ...(taskData.notes && { notes: taskData.notes }),
+        ...(taskData.status && { status: taskData.status }),
+        ...(taskData.priority && { priority: taskData.priority }),
+        ...(taskData.due_date && { due_date: taskData.due_date }),
+        ...(taskData.rock_id && { rock_id: taskData.rock_id }),
+        ...(taskData.assignee_email && { assignee_email: taskData.assignee_email }),
+        ...(taskData.subtasks && { subtasks: taskData.subtasks }),
       };
       
-      console.log('📤 Final task insert payload:', payload);
+      console.log('📤 MyTasks: Explicit task insert payload (public.tasks columns):', payload);
+      console.log('🗂️ Payload keys:', Object.keys(payload));
       
       const { data, error } = await supabase.from('tasks').insert([payload]).select();
       
       if (error) {
-        console.error('❌ Task insert error:', error);
-        console.error('📋 Failed payload was:', payload);
+        console.error('❌ MyTasks: Task insert error:', error);
+        console.error('📋 Failed payload:', payload);
+        console.error('🔍 Error code:', error.code);
+        console.error('🔍 Error details:', error.details);
+        console.error('🔍 Error hint:', error.hint);
         toast.error(`Failed to create To-Do: ${error.message}`);
         throw error;
       }
       
-      console.log('✅ Task created successfully:', data[0]);
+      console.log('✅ MyTasks: Task created successfully:', data[0]);
       return data[0];
     },
     onSuccess: () => {
@@ -169,7 +194,7 @@ export default function MyTasks() {
       toast.success("To-Do created");
     },
     onError: (error) => {
-      console.error('💥 Create task mutation failed:', error);
+      console.error('💥 MyTasks: Create task mutation failed:', error);
     },
   });
 
