@@ -291,7 +291,7 @@ export default function StrategicOrganizer() {
           <Button variant="outline" size="sm" onClick={() => setShowHistory(true)} className="gap-1.5 text-xs">
             <History className="w-3.5 h-3.5" /> History
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowPreview(true)} className="gap-1.5 text-xs">
+          <Button variant="outline" size="sm" onClick={() => navigate("/StrategicOrganizerPreview")} className="gap-1.5 text-xs">
             <Eye className="w-3.5 h-3.5" /> Preview
           </Button>
           <Button variant="outline" size="sm" onClick={generatePDF} className="gap-1.5 text-xs">
