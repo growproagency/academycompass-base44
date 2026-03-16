@@ -26,7 +26,8 @@ export default function TaskCard({ task, rockName, onClick, onStatusChange }) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            const next = { todo: "in_progress", in_progress: "done", done: "todo" };
+            const next = { todo: "in_progress", in_progress: "done", done: null };
+            if (!next[task.status]) return;
             onStatusChange?.(task, next[task.status]);
           }}
           className={`mt-0.5 w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors ${
