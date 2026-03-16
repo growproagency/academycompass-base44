@@ -388,81 +388,9 @@ export default function MyTasks() {
         users={users}
         user={user}
         profile={profile}
-        onSave={async (formData) => {
-          console.log('💾 TaskDialog onSave (edit) called with data:', formData);
-          try {
-            // Extract subtasks for separate handling
-            const { subtasks, ...taskData } = formData;
-            
-            console.log('📦 MyTasks: Main task data:', taskData);
-            console.log('📋 MyTasks: Subtasks to sync:', subtasks);
-            
-            // Update main task
-            const { data: updatedTask, error: taskError } = await supabase
-              .from('tasks')
-              .update(taskData)
-              .eq('id', editTask.id)
-              .select()
-              .single();
-            
-            if (taskError) {
-              console.error('❌ MyTasks: Task update error:', taskError);
-              toast.error(`Update failed: ${taskError.message}`);
-              throw taskError;
-            }
-            
-            console.log('✅ MyTasks: Task updated:', updatedTask);
-            
-            // Sync subtasks
-            if (subtasks !== undefined) {
-              console.log('🔄 MyTasks: Syncing subtasks...');
-              
-              // Get existing subtasks
-              const { data: existingSubtasks } = await supabase
-                .from('subtasks')
-                .select('id')
-                .eq('task_id', editTask.id);
-              
-              const existingIds = new Set(existingSubtasks?.map(s => s.id) || []);
-              const currentIds = new Set(subtasks.filter(s => s.id).map(s => s.id));
-              
-              // Delete removed subtasks
-              const toDelete = [...existingIds].filter(id => !currentIds.has(id));
-              if (toDelete.length > 0) {
-                console.log('🗑️ MyTasks: Deleting subtasks:', toDelete);
-                await supabase.from('subtasks').delete().in('id', toDelete);
-              }
-              
-              // Insert or update subtasks (only real public.subtasks columns)
-              for (const subtask of subtasks) {
-                if (!subtask.title?.trim()) continue;
-                const subtaskData = {
-                  task_id: editTask.id,
-                  title: subtask.title.trim(),
-                  completed: subtask.completed || false,
-                };
-                console.log('📤 MyTasks: Subtask payload:', subtaskData);
-
-                if (subtask.id && existingIds.has(subtask.id)) {
-                  const { error: updateErr } = await supabase.from('subtasks').update(subtaskData).eq('id', subtask.id);
-                  if (updateErr) console.error('❌ MyTasks: Update subtask error:', updateErr);
-                  else console.log('📝 MyTasks: Updated subtask:', subtask.id);
-                } else {
-                  const { error: insertErr } = await supabase.from('subtasks').insert([subtaskData]);
-                  if (insertErr) console.error('❌ MyTasks: Insert subtask error:', insertErr);
-                  else console.log('➕ MyTasks: Inserted new subtask');
-                }
-              }
-              
-              console.log('✅ MyTasks: Subtasks synced');
-            }
-            
-            queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
-            setEditTask(null);
-            toast.success('To-Do updated');
-          } catch (error) {
-            console.error('❌ Task update failed in onSave handler:', error);
-          }
+        onSave={() => {
+          queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
+          setEditTask(null);
         }}
       />
 
@@ -473,51 +401,9 @@ export default function MyTasks() {
         users={users}
         user={user}
         profile={profile}
-        onSave={async (formData) => {
-          console.log('💾 TaskDialog onSave (create) called with data:', formData);
-          try {
-            // Extract subtasks for separate handling
-            const { subtasks, ...taskData } = formData;
-            
-            console.log('📦 MyTasks: Task data:', taskData);
-            console.log('📋 MyTasks: Subtasks:', subtasks);
-            
-            // Create main task
-            const result = await createTask.mutateAsync(taskData);
-            console.log('✅ MyTasks: Task created:', result);
-            
-            // Create subtasks if any
-            if (subtasks && subtasks.length > 0) {
-              console.log('➕ MyTasks: Creating subtasks...');
-              // Only real public.subtasks columns
-              const subtaskData = subtasks
-                .filter(st => st.title?.trim())
-                .map(st => ({
-                  task_id: result.id,
-                  title: st.title.trim(),
-                  completed: st.completed || false,
-                }));
-              console.log('📤 MyTasks: Subtask insert payload:', subtaskData);
-              
-              const { error: subtaskError } = await supabase
-                .from('subtasks')
-                .insert(subtaskData);
-              
-              if (subtaskError) {
-                console.error('❌ MyTasks: Subtask creation error:', subtaskError);
-                toast.error(`Task created but subtasks failed: ${subtaskError.message}`);
-              } else {
-                console.log('✅ MyTasks: Subtasks created');
-              }
-              
-              queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
-            }
-            
-            setCreateOpen(false);
-          } catch (error) {
-            console.error('❌ Task creation failed in onSave handler:', error);
-            // Dialog stays open on error
-          }
+        onSave={() => {
+          queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
+          setCreateOpen(false);
         }}
       />
     </div>
