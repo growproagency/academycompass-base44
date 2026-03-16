@@ -122,7 +122,7 @@ export default function Announcements() {
         console.log('📤 Announcements: Updating announcement:', editAnn.id);
         const { error } = await supabase
           .from('announcements')
-          .update({ title: title.trim(), body: body.trim() })
+          .update({ title: title.trim(), content: body.trim() })
           .eq('id', editAnn.id);
         if (error) {
           console.error('❌ Announcements: Update error:', error);
