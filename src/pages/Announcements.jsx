@@ -226,10 +226,15 @@ export default function Announcements() {
 
       <div className="space-y-3">
         {announcements.map((ann) => (
-          <Card key={ann.id} className="p-5">
+          <Card key={ann.id} className={`p-5 ${ann.is_pinned ? "border-primary/30 bg-primary/5" : ""}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
+                  {ann.is_pinned && (
+                    <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">
+                      <Pin className="w-2.5 h-2.5 mr-0.5" /> Pinned
+                    </Badge>
+                  )}
                   <span className="text-[10px] text-muted-foreground">
                     {ann.created_at ? format(new Date(ann.created_at), "MMM d, yyyy") : ""}
                   </span>
