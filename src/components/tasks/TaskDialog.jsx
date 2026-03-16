@@ -52,7 +52,7 @@ export default function TaskDialog({
           rock_id: task.rock_id || "",
           assigned_to: task.assigned_to || "",
           due_date: task.due_date || "",
-          repeat_frequency: task.repeat_frequency || "none",
+          repeat_frequency: task.repeat || "none",
           subtasks: task.subtasks || [],
         });
       } else {
