@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, AlertCircle, Mountain } from "lucide-react";
+import { Calendar, AlertCircle, Mountain, Repeat2 } from "lucide-react";
 import { format, isPast, parseISO } from "date-fns";
 
 const PRIORITY_STYLES = {
