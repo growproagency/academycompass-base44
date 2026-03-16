@@ -40,21 +40,55 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { profile } = useAuth();
 
+  const isAdmin = profile?.role?.toLowerCase() === 'admin';
+
+  console.log('📅 Calendar: user role:', profile?.role, '| isAdmin:', isAdmin);
+
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["calendar-tasks", profile?.organization_id],
     queryFn: async () => {
       if (!profile?.organization_id) return [];
-      const { data, error } = await supabase
+
+      // Fetch tasks with due dates
+      const { data: tasksData, error } = await supabase
         .from('tasks')
         .select('id, title, status, priority, due_date, assigned_to')
         .eq('organization_id', profile.organization_id)
+        .is('archived_at', null)
         .not('due_date', 'is', null);
       if (error) {
         console.error('❌ Calendar: Tasks query error:', error);
         return [];
       }
-      console.log('✅ Calendar: Tasks fetched:', data?.length || 0);
-      return data || [];
+      console.log('✅ Calendar: Tasks fetched:', tasksData?.length || 0);
+
+      // For admins, resolve assignee names
+      if (isAdmin && tasksData && tasksData.length > 0) {
+        const assigneeIds = [...new Set(tasksData.map(t => t.assigned_to).filter(Boolean))];
+        console.log('📅 Calendar: Fetching assignees for ids:', assigneeIds);
+
+        if (assigneeIds.length > 0) {
+          const { data: profiles, error: pErr } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', assigneeIds);
+          if (pErr) {
+            console.error('❌ Calendar: Assignee fetch error:', pErr);
+          } else {
+            const profileMap = new Map(profiles.map(p => [p.id, p.full_name]));
+            const result = tasksData.map(t => ({
+              ...t,
+              assignee_name: t.assigned_to ? (profileMap.get(t.assigned_to) || 'Unknown') : 'Unassigned',
+            }));
+            console.log('📅 Calendar: Sample task with assignee:', result[0]);
+            return result;
+          }
+        }
+        // No assignees — still mark unassigned
+        return tasksData.map(t => ({ ...t, assignee_name: 'Unassigned' }));
+      }
+
+      return tasksData || [];
     },
     enabled: !!profile?.organization_id,
   });
@@ -180,9 +214,14 @@ export default function CalendarPage() {
                   {events.tasks.map((t) => {
                     const overdue = t.status !== 'done' && isPast(parseISO(t.due_date));
                     return (
-                      <div key={t.id} className={`flex items-center gap-1 px-1.5 py-1 rounded border text-[10px] cursor-pointer hover:opacity-80 transition-opacity ${overdue ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-card border-border/40'}`}>
-                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`} />
-                        <span className="truncate">{t.title}</span>
+                      <div key={t.id} className={`flex flex-col gap-0.5 px-1.5 py-1 rounded border text-[10px] cursor-pointer hover:opacity-80 transition-opacity ${overdue ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-card border-border/40'}`}>
+                        <div className="flex items-center gap-1">
+                          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`} />
+                          <span className="truncate font-medium">{t.title}</span>
+                        </div>
+                        {isAdmin && (
+                          <span className="truncate text-muted-foreground pl-2.5">{t.assignee_name || 'Unassigned'}</span>
+                        )}
                       </div>
                     );
                   })}
@@ -223,9 +262,14 @@ export default function CalendarPage() {
                     {events.tasks.slice(0, 3).map((t) => {
                       const overdue = t.status !== 'done' && isPast(parseISO(t.due_date));
                       return (
-                        <div key={t.id} className={`flex items-center gap-0.5 text-[9px] truncate cursor-pointer hover:opacity-80 ${overdue ? 'text-red-400' : ''}`}>
-                          <div className={`w-1 h-1 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`} />
-                          <span className="truncate">{t.title}</span>
+                        <div key={t.id} className={`flex flex-col gap-0 text-[9px] cursor-pointer hover:opacity-80 ${overdue ? 'text-red-400' : ''}`}>
+                          <div className="flex items-center gap-0.5">
+                            <div className={`w-1 h-1 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`} />
+                            <span className="truncate">{t.title}</span>
+                          </div>
+                          {isAdmin && t.assignee_name && (
+                            <span className="truncate text-muted-foreground pl-1.5">{t.assignee_name}</span>
+                          )}
                         </div>
                       );
                     })}
