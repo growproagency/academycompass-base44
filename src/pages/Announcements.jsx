@@ -230,9 +230,6 @@ export default function Announcements() {
               </div>
               {isAdmin && (
                 <div className="flex items-center gap-1 shrink-0">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => togglePin(ann)}>
-                    {ann.is_pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
-                  </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(ann)}>
                     <Pencil className="w-3.5 h-3.5" />
                   </Button>
