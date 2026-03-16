@@ -432,12 +432,61 @@ export default function StrategicOrganizer() {
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Version History</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              Version History
+              <Button variant="ghost" size="icon" onClick={() => setShowHistory(false)} className="h-6 w-6">
+                <X className="w-4 h-4" />
+              </Button>
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1">Computer-tracked history of plan changes</p>
           </DialogHeader>
           <div className="space-y-3 max-h-96 overflow-y-auto">
-            <div className="text-sm text-muted-foreground p-4 text-center">
-              Version history tracking coming soon. Current version auto-saves.
-            </div>
+            {plans.length > 0 && plans[0].updated_at ? (
+              <div className="space-y-2">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/30 border border-accent/50">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary text-primary-foreground">LATEST</span>
+                      <span className="text-xs text-muted-foreground">Modified</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(plans[0].updated_at).toLocaleString('en-US', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric', 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                </div>
+                {plans[0].created_at && plans[0].created_at !== plans[0].updated_at && (
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 border border-secondary/50">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-semibold">Original</span>
+                        <span className="text-xs text-muted-foreground">Created</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(plans[0].created_at).toLocaleString('en-US', { 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric', 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          second: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground p-4 text-center">
+                No version history yet. Start editing to track changes.
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
