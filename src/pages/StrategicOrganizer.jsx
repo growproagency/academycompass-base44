@@ -148,7 +148,6 @@ export default function StrategicOrganizer() {
   const [saving, setSaving] = useState(false);
   const [planId, setPlanId] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
 
   const [schoolName, setSchoolName] = useState("");
   const [mission, setMission] = useState("");
