@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { supabase } from "@/components/lib/supabaseClient";
 import { useAuth } from "@/components/lib/SupabaseAuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+// Note: task create/update/subtask sync is handled inside TaskDialog component
 import {
   CheckSquare,
   AlertCircle,
@@ -181,72 +182,6 @@ export default function MyTasks() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
-      toast.success("To-Do updated");
-    },
-  });
-
-  const createTask = useMutation({
-    mutationFn: async (taskData) => {
-      console.log('🆕 MyTasks: Create task mutation triggered');
-      console.log('📋 Raw form data received:', taskData);
-      console.log('👤 Authenticated user.id:', user?.id);
-      console.log('🏢 Profile organization_id:', profile?.organization_id);
-      
-      if (!profile?.organization_id) {
-        const errorMsg = 'Missing organization_id';
-        console.error('❌', errorMsg);
-        toast.error(errorMsg);
-        throw new Error(errorMsg);
-      }
-      
-      if (!user?.id) {
-        const errorMsg = 'Missing authenticated user.id';
-        console.error('❌', errorMsg);
-        toast.error(errorMsg);
-        throw new Error(errorMsg);
-      }
-      
-      // Build explicit payload matching ACTUAL public.tasks columns ONLY
-      const payload = {
-        title: taskData.title,
-        description: taskData.description || null,
-        status: taskData.status || 'todo',
-        priority: taskData.priority || 'medium',
-        due_date: taskData.due_date || null,
-        assigned_to: taskData.assigned_to || null,
-        organization_id: profile.organization_id,
-        created_by: user.id,
-      };
-      
-      console.log('📤 MyTasks: Final payload (public.tasks columns ONLY):', payload);
-      console.log('🗂️ Valid columns used:', Object.keys(payload));
-      
-      const { data, error } = await supabase.from('tasks').insert([payload]).select();
-      
-      if (error) {
-        console.error('❌ MyTasks: Task insert error:', error);
-        console.error('📋 Failed payload:', payload);
-        console.error('🔍 Error code:', error.code);
-        console.error('🔍 Error details:', error.details);
-        console.error('🔍 Error hint:', error.hint);
-        console.error('🔍 Error message:', error.message);
-        toast.error(`Failed to create To-Do: ${error.message}`);
-        throw error;
-      }
-      
-      console.log('✅ MyTasks: Task created successfully:', data[0]);
-      console.log('🔄 MyTasks: Invalidating query key: ["my-tasks", profile.organization_id, user.email]');
-      return data[0];
-    },
-    onSuccess: (newTask) => {
-      console.log('🎉 MyTasks: Create mutation onSuccess triggered');
-      console.log('📝 MyTasks: New task data:', newTask);
-      queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
-      console.log('✅ MyTasks: Query invalidated, list should refresh');
-      toast.success("To-Do created");
-    },
-    onError: (error) => {
-      console.error('💥 MyTasks: Create task mutation failed:', error);
     },
   });
 
