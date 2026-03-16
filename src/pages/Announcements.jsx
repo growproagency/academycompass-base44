@@ -137,7 +137,6 @@ export default function Announcements() {
           title: title.trim(),
           content: body.trim(),
           organization_id: profile.organization_id,
-          is_pinned: false,
         };
         console.log('📤 Announcements: Creating announcement:', payload);
         console.log('👤 Auth user id:', user?.id, '| profile auth_user_id:', profile?.auth_user_id);
