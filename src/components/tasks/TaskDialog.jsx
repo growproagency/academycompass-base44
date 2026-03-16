@@ -63,6 +63,7 @@ export default function TaskDialog({
           rock_id: "",
           assigned_to: "",
           due_date: "",
+          repeat_frequency: "none",
           subtasks: [],
         });
       }
