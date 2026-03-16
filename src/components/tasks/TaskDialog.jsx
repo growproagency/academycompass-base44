@@ -99,6 +99,7 @@ export default function TaskDialog({
         priority: taskFields.priority,
         due_date: taskFields.due_date || null,
         assigned_to: taskFields.assigned_to || null,
+        repeat_frequency: taskFields.repeat_frequency || "none",
         organization_id: profile.organization_id,
         created_by: user?.id || null,
       };
