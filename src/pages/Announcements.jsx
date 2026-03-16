@@ -42,7 +42,7 @@ export default function Announcements() {
   const [editAnn, setEditAnn] = useState(null);
   const [deleteAnn, setDeleteAnn] = useState(null);
   const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+  const [body, setBody] = useState(""); // maps to 'content' column in DB
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const queryClient = useQueryClient();
