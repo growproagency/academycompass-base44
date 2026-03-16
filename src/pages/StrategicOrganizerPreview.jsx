@@ -45,394 +45,161 @@ export default function StrategicOrganizerPreview() {
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     const pageHeight = doc.internal.pageSize.height;
     const pageWidth = doc.internal.pageSize.width;
-    const margin = 15;
+    const margin = 12;
     const contentWidth = pageWidth - 2 * margin;
-    let yPos = 15;
+    let yPos = 12;
 
-    // Helper: Add a section header with dark background
-    const addSectionHeader = (text) => {
-      if (yPos > pageHeight - 25) {
-        doc.addPage();
-        yPos = 15;
-      }
-      doc.setFillColor(20, 30, 50); // Dark navy
-      doc.rect(margin, yPos, contentWidth, 8, "F");
-      doc.setFontSize(10);
-      doc.setFont(undefined, "bold");
-      doc.setTextColor(255, 255, 255);
-      doc.text(text, margin + 3, yPos + 6);
-      doc.setTextColor(0, 0, 0);
-      yPos += 10;
-    };
-
-    // Helper: Add colored box section
-    const addBoxSection = (title, content, bgColor = [41, 128, 185]) => {
-      if (yPos > pageHeight - 20) {
-        doc.addPage();
-        yPos = 15;
-      }
-      // Header
-      doc.setFillColor(...bgColor);
-      doc.rect(margin, yPos, contentWidth, 6, "F");
-      doc.setFontSize(9);
-      doc.setFont(undefined, "bold");
-      doc.setTextColor(255, 255, 255);
-      doc.text(title, margin + 2, yPos + 4.5);
-      yPos += 6;
-      
-      // Content box
-      doc.setDrawColor(41, 128, 185);
-      doc.setLineWidth(0.5);
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(9);
-      doc.setFont(undefined, "normal");
-      
-      const lines = doc.splitTextToSize(content, contentWidth - 4);
-      const boxHeight = Math.max(lines.length * 4 + 2, 15);
-      doc.rect(margin, yPos, contentWidth, boxHeight);
-      doc.text(lines, margin + 2, yPos + 3);
-      yPos += boxHeight + 2;
-    };
-
-    // Helper: Add bullet list in box
-    const addBulletBoxSection = (title, bullets, bgColor = [41, 128, 185]) => {
-      if (yPos > pageHeight - 20) {
-        doc.addPage();
-        yPos = 15;
-      }
-      doc.setFillColor(...bgColor);
-      doc.rect(margin, yPos, contentWidth, 6, "F");
-      doc.setFontSize(9);
-      doc.setFont(undefined, "bold");
-      doc.setTextColor(255, 255, 255);
-      doc.text(title, margin + 2, yPos + 4.5);
-      yPos += 6;
-      
-      doc.setDrawColor(41, 128, 185);
-      doc.setLineWidth(0.5);
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(9);
-      doc.setFont(undefined, "normal");
-      
-      const bulletHeight = bullets.filter(b => b).length * 4 + 2;
-      doc.rect(margin, yPos, contentWidth, bulletHeight);
-      
-      let bulletY = yPos + 3;
-      bullets.filter(b => b).forEach(bullet => {
-        doc.text(`• ${bullet}`, margin + 3, bulletY);
-        bulletY += 4;
-      });
-      yPos += bulletHeight + 2;
-    };
-
-    // ===== PAGE 1: HEADER & FOUNDATION =====
-    
     // Dark header
     doc.setFillColor(20, 30, 50);
-    doc.rect(0, 0, pageWidth, 18, "F");
-    doc.setFontSize(20);
+    doc.rect(0, 0, pageWidth, 15, "F");
+    doc.setFontSize(18);
     doc.setFont(undefined, "bold");
     doc.setTextColor(255, 255, 255);
-    doc.text(plan.school_name || "Strategic Plan", margin, 10);
-    doc.setFontSize(10);
+    doc.text(plan.school_name || "Strategic Plan", margin, 8.5);
+    doc.setFontSize(9);
     doc.setFont(undefined, "normal");
-    doc.text("STRATEGIC ORGANIZER", margin, 15);
-    yPos = 22;
+    doc.text("STRATEGIC ORGANIZER", margin, 12.5);
+    yPos = 18;
 
-    // FOUNDATION section
+    // Helper: Section header
+    const addSectionHeader = (text) => {
+      doc.setFillColor(20, 30, 50);
+      doc.rect(margin, yPos, contentWidth, 6, "F");
+      doc.setFontSize(9);
+      doc.setFont(undefined, "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text(text, margin + 2, yPos + 4.2);
+      doc.setTextColor(0, 0, 0);
+      yPos += 7;
+    };
+
+    // Helper: 2-column box row
+    const addTwoColBoxes = (title1, content1, title2, content2) => {
+      const colWidth = (contentWidth - 1.5) / 2;
+      
+      // Headers
+      doc.setFillColor(41, 128, 185);
+      doc.setLineWidth(0.3);
+      doc.setDrawColor(41, 128, 185);
+      doc.rect(margin, yPos, colWidth, 5, "F");
+      doc.rect(margin + colWidth + 1.5, yPos, colWidth, 5, "F");
+      
+      doc.setFontSize(8);
+      doc.setFont(undefined, "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text(title1, margin + 1, yPos + 3.5);
+      doc.text(title2, margin + colWidth + 2.5, yPos + 3.5);
+      yPos += 5;
+
+      // Content boxes
+      doc.setTextColor(0, 0, 0);
+      doc.setFont(undefined, "normal");
+      doc.setFontSize(7.5);
+      
+      const lines1 = doc.splitTextToSize(content1, colWidth - 2);
+      const lines2 = doc.splitTextToSize(content2, colWidth - 2);
+      const height = Math.max(lines1.length * 3.2 + 2, lines2.length * 3.2 + 2, 12);
+      
+      doc.setDrawColor(41, 128, 185);
+      doc.rect(margin, yPos, colWidth, height);
+      doc.rect(margin + colWidth + 1.5, yPos, colWidth, height);
+      
+      doc.text(lines1, margin + 1, yPos + 2);
+      doc.text(lines2, margin + colWidth + 2.5, yPos + 2);
+      
+      yPos += height + 1.5;
+    };
+
+    // FOUNDATION
     addSectionHeader("FOUNDATION");
+    const valuesList = parseJSON(plan.values, []).filter(v => v).join("\n");
+    addTwoColBoxes("MISSION", plan.mission || "N/A", "BHAG", plan.bhag || "N/A");
+    addTwoColBoxes("VALUES", valuesList.replace(/\n/g, "\n"), "IDEAL CUSTOMER PROFILE", plan.ideal_customer_profile || "N/A");
 
-    // Mission & BHAG in 2 columns
-    const colWidth = (contentWidth - 2) / 2;
-    
-    // Mission box
-    doc.setFillColor(41, 128, 185);
-    doc.rect(margin, yPos, colWidth, 6, "F");
-    doc.setFontSize(9);
-    doc.setFont(undefined, "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text("MISSION", margin + 2, yPos + 4.5);
-    
-    // BHAG box
-    doc.rect(margin + colWidth + 2, yPos, colWidth, 6, "F");
-    doc.text("BHAG", margin + colWidth + 4, yPos + 4.5);
-    yPos += 6;
-
-    doc.setTextColor(0, 0, 0);
-    doc.setFont(undefined, "normal");
-    doc.setFontSize(8);
-    doc.setDrawColor(41, 128, 185);
-    doc.setLineWidth(0.5);
-
-    const missionLines = doc.splitTextToSize(plan.mission || "N/A", colWidth - 4);
-    const missionHeight = Math.max(missionLines.length * 3.5 + 2, 20);
-    doc.rect(margin, yPos, colWidth, missionHeight);
-    doc.text(missionLines, margin + 2, yPos + 2);
-
-    const bhagLines = doc.splitTextToSize(plan.bhag || "N/A", colWidth - 4);
-    const bhagHeight = Math.max(bhagLines.length * 3.5 + 2, 20);
-    doc.rect(margin + colWidth + 2, yPos, colWidth, bhagHeight);
-    doc.text(bhagLines, margin + colWidth + 4, yPos + 2);
-
-    yPos += Math.max(missionHeight, bhagHeight) + 2;
-
-    // Values & ICP in 2 columns
-    const valuesBullets = parseJSON(plan.values, []).filter(v => v);
-    const valuesBulletText = valuesBullets.join("\n");
-    
-    doc.setFillColor(41, 128, 185);
-    doc.rect(margin, yPos, colWidth, 6, "F");
-    doc.setFontSize(9);
-    doc.setFont(undefined, "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text("VALUES", margin + 2, yPos + 4.5);
-    
-    doc.rect(margin + colWidth + 2, yPos, colWidth, 6, "F");
-    doc.text("IDEAL CUSTOMER PROFILE", margin + colWidth + 4, yPos + 4.5);
-    yPos += 6;
-
-    doc.setTextColor(0, 0, 0);
-    doc.setFont(undefined, "normal");
-    doc.setFontSize(8);
-    
-    const valuesLines = valuesBullets.map(v => `• ${v}`);
-    const valuesHeight = Math.max(valuesLines.length * 3.5 + 2, 20);
-    doc.setDrawColor(41, 128, 185);
-    doc.rect(margin, yPos, colWidth, valuesHeight);
-    doc.text(valuesLines, margin + 2, yPos + 2);
-
-    const icpLines = doc.splitTextToSize(plan.ideal_customer_profile || "N/A", colWidth - 4);
-    const icpHeight = Math.max(icpLines.length * 3.5 + 2, 20);
-    doc.rect(margin + colWidth + 2, yPos, colWidth, icpHeight);
-    doc.text(icpLines, margin + colWidth + 4, yPos + 2);
-
-    yPos += Math.max(valuesHeight, icpHeight) + 3;
-
-    // ===== PAGE 2: VISION & GOALS =====
-    if (yPos > pageHeight - 40) {
-      doc.addPage();
-      yPos = 15;
-    }
-
+    // VISION & GOALS
     addSectionHeader("VISION & GOALS");
 
-    // 3 Year Vision
-    const threeYearMetrics = [
-      { label: "DATE", value: threeYear?.target_date || "N/A" },
-      { label: "REVENUE", value: threeYear?.revenue_target || "N/A" },
-      { label: "STUDENTS", value: threeYear?.student_target || "N/A" },
-      { label: "NET PROFIT", value: threeYear?.net_profit_target || "N/A" }
-    ];
+    // Helper: Vision section with metrics
+    const addVisionSection = (title, dataObj) => {
+      const colWidth = contentWidth / 4;
+      
+      // Title header
+      doc.setFillColor(41, 128, 185);
+      doc.rect(margin, yPos, contentWidth, 5, "F");
+      doc.setFontSize(8);
+      doc.setFont(undefined, "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text(title, margin + 2, yPos + 3.5);
+      yPos += 5;
 
-    doc.setFillColor(41, 128, 185);
-    doc.rect(margin, yPos, contentWidth, 6, "F");
-    doc.setFontSize(9);
-    doc.setFont(undefined, "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text("3 YEAR VISION", margin + 2, yPos + 4.5);
-    yPos += 6;
-
-    // Metrics row
-    doc.setTextColor(0, 0, 0);
-    doc.setFont(undefined, "normal");
-    doc.setFontSize(8);
-    doc.setDrawColor(41, 128, 185);
-    doc.setLineWidth(0.5);
-    doc.rect(margin, yPos, contentWidth, 12);
-    
-    const metricColWidth = contentWidth / 4;
-    threeYearMetrics.forEach((m, i) => {
-      const x = margin + i * metricColWidth;
+      // Metrics row (DATE, REVENUE, STUDENTS, NET PROFIT)
+      doc.setDrawColor(41, 128, 185);
+      doc.setLineWidth(0.3);
+      doc.setTextColor(0, 0, 0);
       doc.setFont(undefined, "bold");
       doc.setFontSize(7);
-      doc.text(m.label, x + 1, yPos + 2);
-      doc.setFont(undefined, "bold");
-      doc.setFontSize(9);
-      doc.text(m.value, x + 1, yPos + 7);
-      if (i < 3) doc.line(x + metricColWidth, yPos, x + metricColWidth, yPos + 12);
-    });
-    yPos += 14;
 
-    // Key achievements
-    const threeYearBullets = threeYear?.bullets?.filter(b => b) || [];
-    if (threeYearBullets.length > 0) {
-      doc.setFont(undefined, "bold");
-      doc.setFontSize(8);
-      doc.text("KEY ACHIEVEMENTS / MILESTONES", margin + 1, yPos);
-      yPos += 3;
-      doc.setFont(undefined, "normal");
-      doc.setFontSize(8);
-      doc.setDrawColor(41, 128, 185);
-      const bulletHeight = threeYearBullets.length * 3.5 + 2;
-      doc.rect(margin, yPos, contentWidth, bulletHeight);
-      let bulletY = yPos + 2;
-      threeYearBullets.forEach(b => {
-        doc.text(`• ${b}`, margin + 2, bulletY);
-        bulletY += 3.5;
+      const metrics = [
+        { label: "DATE", value: dataObj?.target_date || "N/A" },
+        { label: "REVENUE", value: dataObj?.revenue_target || "N/A" },
+        { label: "STUDENTS", value: dataObj?.student_target || "N/A" },
+        { label: "NET PROFIT", value: dataObj?.net_profit_target || "N/A" }
+      ];
+
+      doc.rect(margin, yPos, contentWidth, 10);
+      metrics.forEach((m, i) => {
+        const x = margin + i * colWidth;
+        doc.text(m.label, x + 1, yPos + 2.5);
+        doc.setFont(undefined, "bold");
+        doc.setFontSize(8);
+        doc.text(m.value, x + 1, yPos + 6.5);
+        doc.setFont(undefined, "bold");
+        doc.setFontSize(7);
+        if (i < 3) doc.line(x + colWidth, yPos, x + colWidth, yPos + 10);
       });
-      yPos += bulletHeight + 2;
-    }
+      yPos += 11;
 
-    // 1 Year Goal
-    if (yPos > pageHeight - 35) {
-      doc.addPage();
-      yPos = 15;
-    }
-
-    const oneYearMetrics = [
-      { label: "DATE", value: oneYear?.target_date || "N/A" },
-      { label: "REVENUE", value: oneYear?.revenue_target || "N/A" },
-      { label: "STUDENTS", value: oneYear?.student_target || "N/A" },
-      { label: "NET PROFIT", value: oneYear?.net_profit_target || "N/A" }
-    ];
-
-    doc.setFillColor(41, 128, 185);
-    doc.rect(margin, yPos, contentWidth, 6, "F");
-    doc.setFontSize(9);
-    doc.setFont(undefined, "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text("1 YEAR GOAL", margin + 2, yPos + 4.5);
-    yPos += 6;
-
-    doc.setTextColor(0, 0, 0);
-    doc.setFont(undefined, "normal");
-    doc.setFontSize(8);
-    doc.setDrawColor(41, 128, 185);
-    doc.rect(margin, yPos, contentWidth, 12);
-    
-    oneYearMetrics.forEach((m, i) => {
-      const x = margin + i * metricColWidth;
-      doc.setFont(undefined, "bold");
+      // Key Achievements header
+      doc.setFillColor(41, 128, 185);
+      doc.rect(margin, yPos, contentWidth, 5, "F");
       doc.setFontSize(7);
-      doc.text(m.label, x + 1, yPos + 2);
       doc.setFont(undefined, "bold");
-      doc.setFontSize(9);
-      doc.text(m.value, x + 1, yPos + 7);
-      if (i < 3) doc.line(x + metricColWidth, yPos, x + metricColWidth, yPos + 12);
-    });
-    yPos += 14;
+      doc.setTextColor(255, 255, 255);
+      doc.text("KEY ACHIEVEMENTS / MILESTONES", margin + 2, yPos + 3.5);
+      yPos += 5;
 
-    const oneYearBullets = oneYear?.bullets?.filter(b => b) || [];
-    if (oneYearBullets.length > 0) {
-      doc.setFont(undefined, "bold");
-      doc.setFontSize(8);
-      doc.text("KEY ACHIEVEMENTS / MILESTONES", margin + 1, yPos);
-      yPos += 3;
-      doc.setFont(undefined, "normal");
-      doc.setFontSize(8);
+      // Bullets
+      const bullets = (dataObj?.bullets || []).filter(b => b);
+      const bulletHeight = Math.max(bullets.length * 3.2 + 2, 8);
       doc.setDrawColor(41, 128, 185);
-      const bulletHeight = oneYearBullets.length * 3.5 + 2;
       doc.rect(margin, yPos, contentWidth, bulletHeight);
-      let bulletY = yPos + 2;
-      oneYearBullets.forEach(b => {
-        doc.text(`• ${b}`, margin + 2, bulletY);
-        bulletY += 3.5;
-      });
-      yPos += bulletHeight + 2;
-    }
-
-    // 90 Day Projects
-    if (yPos > pageHeight - 35) {
-      doc.addPage();
-      yPos = 15;
-    }
-
-    const ninetyDayMetrics = [
-      { label: "DATE", value: ninetyDay?.target_date || "N/A" },
-      { label: "REVENUE", value: ninetyDay?.revenue_target || "N/A" },
-      { label: "STUDENTS", value: ninetyDay?.student_target || "N/A" },
-      { label: "NET PROFIT", value: ninetyDay?.net_profit_target || "N/A" }
-    ];
-
-    doc.setFillColor(41, 128, 185);
-    doc.rect(margin, yPos, contentWidth, 6, "F");
-    doc.setFontSize(9);
-    doc.setFont(undefined, "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text("90 DAY PROJECTS", margin + 2, yPos + 4.5);
-    yPos += 6;
-
-    doc.setTextColor(0, 0, 0);
-    doc.setFont(undefined, "normal");
-    doc.setFontSize(8);
-    doc.setDrawColor(41, 128, 185);
-    doc.rect(margin, yPos, contentWidth, 12);
-    
-    ninetyDayMetrics.forEach((m, i) => {
-      const x = margin + i * metricColWidth;
-      doc.setFont(undefined, "bold");
-      doc.setFontSize(7);
-      doc.text(m.label, x + 1, yPos + 2);
-      doc.setFont(undefined, "bold");
-      doc.setFontSize(9);
-      doc.text(m.value, x + 1, yPos + 7);
-      if (i < 3) doc.line(x + metricColWidth, yPos, x + metricColWidth, yPos + 12);
-    });
-    yPos += 14;
-
-    const ninetyDayBullets = ninetyDay?.bullets?.filter(b => b) || [];
-    if (ninetyDayBullets.length > 0) {
-      doc.setFont(undefined, "bold");
-      doc.setFontSize(8);
-      doc.text("KEY ACHIEVEMENTS / MILESTONES", margin + 1, yPos);
-      yPos += 3;
+      doc.setTextColor(0, 0, 0);
       doc.setFont(undefined, "normal");
-      doc.setFontSize(8);
-      doc.setDrawColor(41, 128, 185);
-      const bulletHeight = ninetyDayBullets.length * 3.5 + 2;
-      doc.rect(margin, yPos, contentWidth, bulletHeight);
+      doc.setFontSize(7.5);
+      
       let bulletY = yPos + 2;
-      ninetyDayBullets.forEach(b => {
+      bullets.forEach(b => {
         doc.text(`• ${b}`, margin + 2, bulletY);
-        bulletY += 3.5;
+        bulletY += 3.2;
       });
-      yPos += bulletHeight + 2;
-    }
+      yPos += bulletHeight + 1.5;
+    };
 
-    // ===== PAGE: CAPTURE =====
-    if (yPos > pageHeight - 30) {
-      doc.addPage();
-      yPos = 15;
-    }
+    addVisionSection("3 YEAR VISION", threeYear);
+    addVisionSection("1 YEAR GOAL", oneYear);
+    addVisionSection("90 DAY PROJECTS", ninetyDay);
 
+    // CAPTURE
     addSectionHeader("CAPTURE");
-
-    // Parking Lot & Focus in 2 columns
-    doc.setFillColor(41, 128, 185);
-    doc.rect(margin, yPos, colWidth, 6, "F");
-    doc.setFontSize(9);
-    doc.setFont(undefined, "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text("THE PARKING LOT", margin + 2, yPos + 4.5);
-    
-    doc.rect(margin + colWidth + 2, yPos, colWidth, 6, "F");
-    doc.text("FOCUS OF THE YEAR", margin + colWidth + 4, yPos + 4.5);
-    yPos += 6;
-
-    doc.setTextColor(0, 0, 0);
-    doc.setFont(undefined, "normal");
-    doc.setFontSize(8);
-    doc.setDrawColor(41, 128, 185);
-    
-    const parkingBullets = parseJSON(plan.parking_lot, []).filter(p => p);
-    const parkingBulletText = parkingBullets.map(p => `• ${p}`);
-    const parkingHeight = Math.max(parkingBullets.length * 3.5 + 2, 15);
-    doc.rect(margin, yPos, colWidth, parkingHeight);
-    doc.text(parkingBulletText, margin + 2, yPos + 2);
-
-    const focusLines = doc.splitTextToSize(plan.focus_of_the_year || "N/A", colWidth - 4);
-    const focusHeight = Math.max(focusLines.length * 3.5 + 2, 15);
-    doc.rect(margin + colWidth + 2, yPos, colWidth, focusHeight);
-    doc.text(focusLines, margin + colWidth + 4, yPos + 2);
-
-    yPos += Math.max(parkingHeight, focusHeight) + 5;
+    const parkingList = parseJSON(plan.parking_lot, []).filter(p => p).join("\n");
+    addTwoColBoxes("THE PARKING LOT", parkingList.replace(/\n/g, "\n"), "FOCUS OF THE YEAR", plan.focus_of_the_year || "N/A");
 
     // Footer
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setTextColor(128, 128, 128);
     const today = new Date();
     const dateStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
-    doc.text(`Generated ${dateStr} · Academy Compass`, pageWidth - margin, pageHeight - 8, { align: "right" });
+    doc.text(`Generated ${dateStr} · Academy Compass`, pageWidth - margin, pageHeight - 5, { align: "right" });
 
     doc.save(`${plan.school_name || "Strategic Plan"}.pdf`);
     toast.success("PDF downloaded");
