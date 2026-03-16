@@ -84,10 +84,7 @@ export default function TaskDialog({
       return;
     }
 
-    if (!task && !user?.id) {
-      toast.error(`Missing user info. user=${JSON.stringify(user)}`);
-      return;
-    }
+
 
     setSaving(true);
     try {
