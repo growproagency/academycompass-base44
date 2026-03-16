@@ -295,7 +295,6 @@ export default function TaskDialog({
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="What needs to be done?"
-              required
             />
           </div>
 
