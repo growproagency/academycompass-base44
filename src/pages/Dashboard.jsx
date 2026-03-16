@@ -275,31 +275,43 @@ export default function Dashboard() {
     },
   });
 
+  const isAdmin = profile?.role?.toLowerCase() === 'admin';
   const rockMap = useMemo(() => new Map(rocks.map((r) => [r.id, r.name])), [rocks]);
 
   const filteredTasks = useMemo(() => {
     console.log('🔍 Dashboard: Filtering tasks');
+    console.log('👤 Dashboard: User role:', profile?.role, '| profile.id:', profile?.id, '| isAdmin:', isAdmin);
     console.log('📊 Dashboard: Total tasks before filter:', tasks.length);
-    console.log('🎯 Dashboard: Current filter value:', filterStatus);
-    console.log('📋 Dashboard: All task statuses:', tasks.map(t => ({ id: t.id, status: t.status })));
-    
-    const filtered = tasks.filter((t) => {
-      if (filterStatus !== "all" && t.status !== filterStatus) {
-        console.log(`⏩ Dashboard: Excluding task ${t.id} (status: ${t.status}, filter: ${filterStatus})`);
+
+    const roleBased = tasks.filter((t) => {
+      // Admins see all tasks (including unassigned)
+      if (isAdmin) return true;
+      // Regular members only see tasks assigned to them
+      if (!t.assigned_to) {
+        console.log(`🚫 Dashboard: Hiding unassigned task ${t.id} from non-admin`);
+        return false;
+      }
+      if (t.assigned_to !== profile?.id) {
+        console.log(`🚫 Dashboard: Hiding task ${t.id} assigned to someone else (${t.assigned_to})`);
         return false;
       }
       return true;
     });
-    
-    console.log('✅ Dashboard: Filtered tasks count:', filtered.length);
+
+    const filtered = roleBased.filter((t) => {
+      if (filterStatus !== "all" && t.status !== filterStatus) return false;
+      return true;
+    });
+
+    console.log('✅ Dashboard: Visible tasks after role filter:', roleBased.length, '| after status filter:', filtered.length);
     console.log('📊 Dashboard: Tasks per status:', {
       todo: filtered.filter(t => t.status === 'todo').length,
       in_progress: filtered.filter(t => t.status === 'in_progress').length,
-      done: filtered.filter(t => t.status === 'done').length
+      done: filtered.filter(t => t.status === 'done').length,
     });
-    
+
     return filtered;
-  }, [tasks, filterStatus]);
+  }, [tasks, filterStatus, isAdmin, profile?.id]);
 
   const getColumnTasks = (status) => {
     const statusTasks = filteredTasks.filter((t) => t.status === status);

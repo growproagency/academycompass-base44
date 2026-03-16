@@ -57,21 +57,24 @@ export default function MyTasks() {
   });
 
   const { data: allTasks = [], isLoading } = useQuery({
-    queryKey: ["my-tasks", profile?.organization_id, user?.email],
+    queryKey: ["my-tasks", profile?.organization_id, profile?.id],
     queryFn: async () => {
-      if (!profile?.organization_id || !user?.email) {
-        console.log('⚠️ MyTasks: Cannot fetch tasks - missing organization_id or user email');
+      if (!profile?.organization_id || !profile?.id) {
+        console.log('⚠️ MyTasks: Cannot fetch tasks - missing organization_id or profile.id');
         return [];
       }
       console.log('📡 MyTasks: Fetching tasks for:', { 
         organizationId: profile.organization_id, 
         userEmail: user.email 
       });
-      // Step 1: Fetch tasks (only real public.tasks columns)
+      console.log('👤 MyTasks: User role:', profile?.role, '| profile.id:', profile?.id);
+
+      // Step 1: Fetch tasks assigned to the current user only (personal view)
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to, repeat')
-        .eq('organization_id', profile.organization_id);
+        .eq('organization_id', profile.organization_id)
+        .eq('assigned_to', profile.id);
 
       if (tasksError) {
         console.error('❌ MyTasks: Tasks query error:', tasksError);
@@ -79,7 +82,7 @@ export default function MyTasks() {
         return [];
       }
 
-      console.log('✅ MyTasks: Raw tasks fetched:', tasksData?.length || 0);
+      console.log('✅ MyTasks: Raw tasks fetched (assigned to me):', tasksData?.length || 0);
       console.log('📊 MyTasks: Task statuses:', tasksData?.map(t => t.status));
 
       if (!tasksData || tasksData.length === 0) return [];
@@ -129,7 +132,7 @@ export default function MyTasks() {
       console.log('✅ MyTasks: Final combined tasks:', result.length);
       return result;
     },
-    enabled: !!profile?.organization_id && !!user?.email,
+    enabled: !!profile?.organization_id && !!profile?.id,
   });
 
   const { data: rocks = [] } = useQuery({
