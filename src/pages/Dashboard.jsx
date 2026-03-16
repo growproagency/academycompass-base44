@@ -55,7 +55,7 @@ export default function Dashboard() {
       // Try fetching with archived_at; fall back without it if column doesn't exist
       let { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
-        .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to, archived_at')
+        .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to, archived_at, repeat')
         .eq('organization_id', profile.organization_id);
       
       if (tasksError) {
