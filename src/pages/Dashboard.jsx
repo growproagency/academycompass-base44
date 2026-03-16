@@ -54,8 +54,9 @@ export default function Dashboard() {
       // Step 1: Fetch tasks (only real public.tasks columns)
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
-        .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to, repeat')
-        .eq('organization_id', profile.organization_id);
+        .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to')
+        .eq('organization_id', profile.organization_id)
+        .is('archived_at', null);
       
       if (tasksError) {
         console.error('❌ Dashboard: Tasks query failed:', tasksError);
