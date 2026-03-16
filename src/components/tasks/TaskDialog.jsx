@@ -189,9 +189,7 @@ export default function TaskDialog({
         const { error } = await supabase.from('subtasks').update(basePayload).eq('id', st.id);
         if (error) console.error('❌ TaskDialog: Update subtask error:', error);
       } else {
-        // New subtask — include organization_id for RLS
-        const insertPayload = { ...basePayload, organization_id: profile?.organization_id };
-        const { error } = await supabase.from('subtasks').insert([insertPayload]);
+        const { error } = await supabase.from('subtasks').insert([basePayload]);
         if (error) console.error('❌ TaskDialog: Insert subtask error:', error);
       }
     }
