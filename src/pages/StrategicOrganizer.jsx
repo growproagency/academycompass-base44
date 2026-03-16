@@ -274,13 +274,13 @@ export default function StrategicOrganizer() {
           <p className="text-sm text-muted-foreground mt-0.5">Define your school's vision, goals, and 90-day priorities.</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" disabled className="gap-1.5 text-xs">
+          <Button variant="outline" size="sm" onClick={() => setShowHistory(true)} className="gap-1.5 text-xs">
             <History className="w-3.5 h-3.5" /> History
           </Button>
-          <Button variant="outline" size="sm" disabled className="gap-1.5 text-xs">
+          <Button variant="outline" size="sm" onClick={() => setShowPreview(true)} className="gap-1.5 text-xs">
             <Eye className="w-3.5 h-3.5" /> Preview
           </Button>
-          <Button variant="outline" size="sm" disabled className="gap-1.5 text-xs">
+          <Button variant="outline" size="sm" onClick={generatePDF} className="gap-1.5 text-xs">
             <Download className="w-3.5 h-3.5" /> Download PDF
           </Button>
           <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1.5 text-xs">
