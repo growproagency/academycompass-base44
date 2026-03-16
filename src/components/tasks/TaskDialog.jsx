@@ -109,7 +109,7 @@ export default function TaskDialog({
         console.log('✅ TaskDialog: Task updated');
 
         // Sync subtasks
-        await syncSubtasks(task.id, subtasks);
+        await syncSubtasks(task.id, subtasks, profile);
 
         toast.success('To-Do updated');
         onOpenChange(false);
