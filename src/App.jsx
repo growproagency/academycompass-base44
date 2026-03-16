@@ -51,6 +51,7 @@ function App() {
           <AppRoutes />
         </Router>
         <Toaster />
+        <SonnerToaster richColors position="top-right" />
       </QueryClientProvider>
     </AuthProvider>
   )
