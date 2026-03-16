@@ -411,7 +411,7 @@ export default function TaskDialog({
               </Button>
             )}
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" disabled={saving}>
+            <Button type="button" disabled={saving} onClick={handleSubmit}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {task ? "Update" : "Create"}
             </Button>
