@@ -19,6 +19,7 @@ import Announcements from './pages/Announcements';
 import CalendarPage from './pages/CalendarPage';
 import ArchivePage from './pages/ArchivePage';
 import StrategicOrganizer from './pages/StrategicOrganizer';
+import StrategicOrganizerPreview from './pages/StrategicOrganizerPreview';
 import AdminPanel from './pages/AdminPanel';
 
 const AppRoutes = () => {
