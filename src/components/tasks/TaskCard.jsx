@@ -79,6 +79,13 @@ export default function TaskCard({ task, rockName, onClick, onStatusChange }) {
               {task.assignee?.full_name || "Unassigned"}
             </Badge>
 
+            {task.repeat && task.repeat !== "none" && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-violet-500/10 text-violet-400 border-violet-500/20">
+                <Repeat2 className="w-2.5 h-2.5 mr-0.5" />
+                {task.repeat}
+              </Badge>
+            )}
+
             {subtasksTotal > 0 && (
               <span className="text-[10px] text-muted-foreground">
                 {subtasksDone}/{subtasksTotal}
