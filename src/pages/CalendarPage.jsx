@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { supabase } from "@/components/lib/supabaseClient";
+import { useAuth } from "@/components/lib/SupabaseAuthContext";
 import { useQuery } from "@tanstack/react-query";
 import {
   CalendarDays,
@@ -37,32 +38,56 @@ const PRIORITY_DOT = {
 export default function CalendarPage() {
   const [view, setView] = useState("weekly");
   const [currentDate, setCurrentDate] = useState(new Date());
+  const { profile } = useAuth();
 
   const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ["calendar-tasks"],
+    queryKey: ["calendar-tasks", profile?.organization_id],
     queryFn: async () => {
+      if (!profile?.organization_id) return [];
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
-        .is('archived_at', null);
+        .select('id, title, status, priority, due_date, assigned_to')
+        .eq('organization_id', profile.organization_id)
+        .not('due_date', 'is', null);
+      if (error) {
+        console.error('❌ Calendar: Tasks query error:', error);
+        return [];
+      }
+      console.log('✅ Calendar: Tasks fetched:', data?.length || 0);
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const { data: milestones = [] } = useQuery({
-    queryKey: ["calendar-milestones"],
+    queryKey: ["calendar-milestones", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('milestones').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('milestones')
+        .select('id, title, due_date, rock_id')
+        .eq('organization_id', profile.organization_id);
+      if (error) {
+        console.error('❌ Calendar: Milestones query error:', error);
+        return [];
+      }
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const { data: rocks = [] } = useQuery({
-    queryKey: ["rocks"],
+    queryKey: ["rocks", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('rocks').select('*');
+      if (!profile?.organization_id) return [];
+      const { data, error } = await supabase
+        .from('rocks')
+        .select('id, name')
+        .eq('organization_id', profile.organization_id);
+      if (error) return [];
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const rockMap = useMemo(() => new Map(rocks.map((r) => [r.id, r.name])), [rocks]);

@@ -17,15 +17,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, Archive } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/components/lib/supabaseClient";
+import { toast } from "sonner";
 
-export default function TaskDialog({ open, onOpenChange, task, rocks, users, onSave, defaultStatus, user, profile }) {
+export default function TaskDialog({
+  open, onOpenChange, task, rocks, users, onSave, onArchive,
+  defaultStatus, user, profile
+}) {
   const [form, setForm] = useState({
     title: "",
     description: "",
-    notes: "",
     status: defaultStatus || "todo",
     priority: "medium",
     rock_id: "",
@@ -34,15 +37,9 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
     subtasks: [],
   });
   const [saving, setSaving] = useState(false);
+  const [archiving, setArchiving] = useState(false);
 
-  console.log('📋 TaskDialog rendered with:', {
-    open,
-    hasTask: !!task,
-    hasUser: !!user,
-    hasProfile: !!profile,
-    userId: user?.id,
-    organizationId: profile?.organization_id
-  });
+  const isAdmin = profile?.role?.toLowerCase() === "admin";
 
   useEffect(() => {
     if (open) {
@@ -50,7 +47,6 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
         setForm({
           title: task.title || "",
           description: task.description || "",
-          notes: task.notes || "",
           status: task.status || "todo",
           priority: task.priority || "medium",
           rock_id: task.rock_id || "",
@@ -62,7 +58,6 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
         setForm({
           title: "",
           description: "",
-          notes: "",
           status: defaultStatus || "todo",
           priority: "medium",
           rock_id: "",
@@ -76,29 +71,144 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('🔘 Create button clicked');
-    
-    if (!form.title.trim()) {
-      console.warn('⚠️ Task title is required');
+    if (!form.title.trim()) return;
+
+    console.log('🔘 TaskDialog: Update/Create clicked');
+    console.log('📋 TaskDialog: Form data:', form);
+
+    setSaving(true);
+    try {
+      const { subtasks, ...taskFields } = form;
+
+      // Build task payload — only real public.tasks columns
+      const taskPayload = {
+        title: taskFields.title.trim(),
+        description: taskFields.description || null,
+        status: taskFields.status,
+        priority: taskFields.priority,
+        due_date: taskFields.due_date || null,
+        assigned_to: taskFields.assigned_to || null,
+        rock_id: taskFields.rock_id || null,
+      };
+
+      console.log('📤 TaskDialog: Task payload:', taskPayload);
+
+      if (task) {
+        // ---- UPDATE ----
+        const { error: taskError } = await supabase
+          .from('tasks')
+          .update(taskPayload)
+          .eq('id', task.id);
+
+        if (taskError) {
+          console.error('❌ TaskDialog: Task update error:', taskError);
+          toast.error(`Failed to update: ${taskError.message}`);
+          setSaving(false);
+          return;
+        }
+        console.log('✅ TaskDialog: Task updated');
+
+        // Sync subtasks
+        await syncSubtasks(task.id, subtasks);
+
+        toast.success('To-Do updated');
+        onOpenChange(false);
+        if (onSave) onSave(); // signal parent to refresh
+      } else {
+        // ---- CREATE ----
+        if (!profile?.organization_id || !user?.id) {
+          toast.error('Missing organization or user info');
+          setSaving(false);
+          return;
+        }
+
+        const createPayload = {
+          ...taskPayload,
+          organization_id: profile.organization_id,
+          created_by: user.id,
+        };
+
+        console.log('📤 TaskDialog: Create payload:', createPayload);
+        const { data: newTask, error: createError } = await supabase
+          .from('tasks')
+          .insert([createPayload])
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('❌ TaskDialog: Task create error:', createError);
+          toast.error(`Failed to create: ${createError.message}`);
+          setSaving(false);
+          return;
+        }
+        console.log('✅ TaskDialog: Task created:', newTask);
+
+        // Create subtasks
+        const validSubtasks = subtasks.filter(s => s.title?.trim());
+        if (validSubtasks.length > 0) {
+          const subtaskPayload = validSubtasks.map(s => ({
+            task_id: newTask.id,
+            title: s.title.trim(),
+            completed: s.completed || false,
+          }));
+          console.log('📤 TaskDialog: Subtask insert payload:', subtaskPayload);
+          const { error: stError } = await supabase.from('subtasks').insert(subtaskPayload);
+          if (stError) console.error('❌ TaskDialog: Subtask insert error:', stError);
+          else console.log('✅ TaskDialog: Subtasks created');
+        }
+
+        toast.success('To-Do created');
+        onOpenChange(false);
+        if (onSave) onSave(newTask);
+      }
+    } catch (err) {
+      console.error('💥 TaskDialog: Unexpected error:', err);
+      toast.error(`Error: ${err.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Sync subtasks: delete removed, update existing, insert new
+  const syncSubtasks = async (taskId, subtasks) => {
+    console.log('🔄 TaskDialog: Syncing subtasks for task:', taskId);
+
+    const { data: existing, error: fetchError } = await supabase
+      .from('subtasks')
+      .select('id, title, completed')
+      .eq('task_id', taskId);
+
+    if (fetchError) {
+      console.error('❌ TaskDialog: Fetch existing subtasks error:', fetchError);
       return;
     }
-    
-    console.log('📤 Task form submission started');
-    console.log('👤 Authenticated user.id:', user?.id);
-    console.log('🏢 Profile organization_id:', profile?.organization_id);
-    console.log('📋 Form data:', form);
-    
-    setSaving(true);
-    
-    try {
-      await onSave(form);
-      console.log('✅ Task saved successfully');
-      setSaving(false);
-    } catch (error) {
-      console.error('❌ Task save failed:', error);
-      setSaving(false);
-      // Keep dialog open on error so user can retry
+
+    const existingIds = new Set(existing?.map(s => s.id) || []);
+    const currentIds = new Set(subtasks.filter(s => s.id).map(s => s.id));
+
+    // Delete removed
+    const toDelete = [...existingIds].filter(id => !currentIds.has(id));
+    if (toDelete.length > 0) {
+      console.log('🗑️ TaskDialog: Deleting subtasks:', toDelete);
+      const { error } = await supabase.from('subtasks').delete().in('id', toDelete);
+      if (error) console.error('❌ TaskDialog: Delete subtasks error:', error);
     }
+
+    // Insert/update
+    for (const st of subtasks) {
+      if (!st.title?.trim()) continue;
+      const payload = { task_id: taskId, title: st.title.trim(), completed: st.completed || false };
+      console.log('📤 TaskDialog: Subtask upsert payload:', payload);
+
+      if (st.id && existingIds.has(st.id)) {
+        const { error } = await supabase.from('subtasks').update(payload).eq('id', st.id);
+        if (error) console.error('❌ TaskDialog: Update subtask error:', error);
+      } else {
+        const { error } = await supabase.from('subtasks').insert([payload]);
+        if (error) console.error('❌ TaskDialog: Insert subtask error:', error);
+      }
+    }
+    console.log('✅ TaskDialog: Subtasks synced');
   };
 
   const addSubtask = () => {
@@ -109,42 +219,50 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
     const updated = [...form.subtasks];
     updated[idx] = { ...updated[idx], [field]: value };
     setForm({ ...form, subtasks: updated });
-    
-    // If editing existing task and toggling completed, save immediately
+
+    // Immediately persist checkbox toggles for existing subtasks
     if (task && field === 'completed' && updated[idx].id) {
-      console.log('☑️ TaskDialog: Toggling subtask completion:', updated[idx].id, value);
+      console.log('☑️ TaskDialog: Persisting subtask toggle:', updated[idx].id, value);
       const { error } = await supabase
         .from('subtasks')
         .update({ completed: value })
         .eq('id', updated[idx].id);
-      
-      if (error) {
-        console.error('❌ TaskDialog: Failed to update subtask:', error);
-      } else {
-        console.log('✅ TaskDialog: Subtask completion updated');
-      }
+      if (error) console.error('❌ TaskDialog: Subtask toggle error:', error);
     }
   };
 
   const removeSubtask = async (idx) => {
-    const subtaskToRemove = form.subtasks[idx];
-    
-    // If it has an id, delete from database
-    if (subtaskToRemove.id) {
-      console.log('🗑️ TaskDialog: Deleting subtask:', subtaskToRemove.id);
-      const { error } = await supabase
-        .from('subtasks')
-        .delete()
-        .eq('id', subtaskToRemove.id);
-      
+    const st = form.subtasks[idx];
+    if (st.id) {
+      console.log('🗑️ TaskDialog: Removing subtask:', st.id);
+      const { error } = await supabase.from('subtasks').delete().eq('id', st.id);
       if (error) {
         console.error('❌ TaskDialog: Failed to delete subtask:', error);
+        toast.error('Failed to delete subtask');
         return;
       }
-      console.log('✅ TaskDialog: Subtask deleted');
     }
-    
     setForm({ ...form, subtasks: form.subtasks.filter((_, i) => i !== idx) });
+  };
+
+  const handleArchive = async () => {
+    if (!task || !isAdmin) return;
+    setArchiving(true);
+    console.log('📦 TaskDialog: Archiving task:', task.id);
+    const { error } = await supabase
+      .from('tasks')
+      .update({ archived_at: new Date().toISOString(), archived_by: user?.id || null })
+      .eq('id', task.id);
+    if (error) {
+      console.error('❌ TaskDialog: Archive error:', error);
+      toast.error(`Failed to archive: ${error.message}`);
+    } else {
+      console.log('✅ TaskDialog: Task archived');
+      toast.success('Task archived');
+      onOpenChange(false);
+      if (onArchive) onArchive();
+    }
+    setArchiving(false);
   };
 
   return (
@@ -235,16 +353,6 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
             />
           </div>
 
-          <div>
-            <Label>Notes</Label>
-            <Textarea
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder="Additional notes..."
-              rows={2}
-            />
-          </div>
-
           {/* Subtasks */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -255,7 +363,7 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
             </div>
             <div className="space-y-2">
               {form.subtasks.map((st, idx) => (
-                <div key={idx} className="flex items-center gap-2">
+                <div key={st.id || idx} className="flex items-center gap-2">
                   <Checkbox
                     checked={st.completed}
                     onCheckedChange={(v) => updateSubtask(idx, "completed", v)}
@@ -274,7 +382,20 @@ export default function TaskDialog({ open, onOpenChange, task, rocks, users, onS
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {task && isAdmin && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-destructive mr-auto"
+                onClick={handleArchive}
+                disabled={archiving}
+              >
+                {archiving ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Archive className="w-3.5 h-3.5 mr-1.5" />}
+                Archive
+              </Button>
+            )}
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
