@@ -89,6 +89,7 @@ export default function TaskDialog({
         due_date: taskFields.due_date || null,
         assigned_to: taskFields.assigned_to || null,
         rock_id: taskFields.rock_id || null,
+        organization_id: profile?.organization_id,
       };
 
       console.log('📤 TaskDialog: Task payload:', taskPayload);
