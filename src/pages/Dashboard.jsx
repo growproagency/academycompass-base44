@@ -120,8 +120,10 @@ export default function Dashboard() {
         subtasksByTaskId.get(st.task_id).push(st);
       });
       
-      // Step 5: Combine everything
-      const tasksWithRelations = tasksData.map(task => ({
+      // Step 5: Combine everything (filter out archived tasks client-side for safety)
+      const activeTasks = tasksData.filter(t => !t.archived_at);
+      console.log('🗄️ Dashboard: Active (non-archived) tasks:', activeTasks.length, '| Total:', tasksData.length);
+      const tasksWithRelations = activeTasks.map(task => ({
         ...task,
         assignee: task.assigned_to ? assigneesMap.get(task.assigned_to) : null,
         subtasks: subtasksByTaskId.get(task.id) || []

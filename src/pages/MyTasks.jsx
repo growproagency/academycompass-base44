@@ -86,7 +86,9 @@ export default function MyTasks() {
       console.log('✅ MyTasks: Raw tasks fetched (assigned to me):', tasksData?.length || 0);
       console.log('📊 MyTasks: Task statuses:', tasksData?.map(t => t.status));
 
-      if (!tasksData || tasksData.length === 0) return [];
+      const activeTasksData = tasksData.filter(t => !t.archived_at);
+      console.log('🗄️ MyTasks: Active tasks:', activeTasksData.length, '| Total fetched:', tasksData.length);
+      if (!activeTasksData || activeTasksData.length === 0) return [];
 
       // Step 2: Batch fetch assignees
       const assigneeIds = [...new Set(tasksData.map(t => t.assigned_to).filter(Boolean))];
