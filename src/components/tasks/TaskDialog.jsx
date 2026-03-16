@@ -71,19 +71,28 @@ export default function TaskDialog({
 
   const handleSubmit = async (e) => {
     if (e?.preventDefault) e.preventDefault();
+
+    console.log('🔘 handleSubmit fired. profile:', profile, 'user:', user);
+
     if (!form.title.trim()) {
       toast.error('Title is required');
       return;
     }
 
-    console.log('🔘 TaskDialog: Update/Create clicked');
-    console.log('📋 TaskDialog: Form data:', form);
+    if (!profile?.organization_id) {
+      toast.error(`Missing organization info. profile=${JSON.stringify(profile)}`);
+      return;
+    }
+
+    if (!task && !user?.id) {
+      toast.error(`Missing user info. user=${JSON.stringify(user)}`);
+      return;
+    }
 
     setSaving(true);
     try {
       const { subtasks, ...taskFields } = form;
 
-      // Build task payload — only real public.tasks columns
       const taskPayload = {
         title: taskFields.title.trim(),
         description: taskFields.description || null,
@@ -92,10 +101,8 @@ export default function TaskDialog({
         due_date: taskFields.due_date || null,
         assigned_to: taskFields.assigned_to || null,
         rock_id: taskFields.rock_id || null,
-        organization_id: profile?.organization_id,
+        organization_id: profile.organization_id,
       };
-
-      console.log('📤 TaskDialog: Task payload:', taskPayload);
 
       if (task) {
         // ---- UPDATE ----
@@ -105,34 +112,22 @@ export default function TaskDialog({
           .eq('id', task.id);
 
         if (taskError) {
-          console.error('❌ TaskDialog: Task update error:', taskError);
-          toast.error(`Failed to update: ${taskError.message}`);
+          toast.error(`Update failed: ${taskError.message} (code: ${taskError.code})`);
           setSaving(false);
           return;
         }
-        console.log('✅ TaskDialog: Task updated');
 
-        // Sync subtasks
         await syncSubtasks(task.id, subtasks, profile);
-
         toast.success('To-Do updated');
         onOpenChange(false);
-        if (onSave) onSave(); // signal parent to refresh
+        if (onSave) onSave();
       } else {
         // ---- CREATE ----
-        if (!profile?.organization_id || !user?.id) {
-          toast.error('Missing organization or user info');
-          setSaving(false);
-          return;
-        }
-
         const createPayload = {
           ...taskPayload,
-          organization_id: profile.organization_id,
           created_by: user.id,
         };
 
-        console.log('📤 TaskDialog: Create payload:', createPayload);
         const { data: newTask, error: createError } = await supabase
           .from('tasks')
           .insert([createPayload])
@@ -140,14 +135,11 @@ export default function TaskDialog({
           .single();
 
         if (createError) {
-          console.error('❌ TaskDialog: Task create error:', createError);
-          toast.error(`Failed to create: ${createError.message}`);
+          toast.error(`Create failed: ${createError.message} (code: ${createError.code})`);
           setSaving(false);
           return;
         }
-        console.log('✅ TaskDialog: Task created:', newTask);
 
-        // Create subtasks
         const validSubtasks = subtasks.filter(s => s.title?.trim());
         if (validSubtasks.length > 0) {
           const subtaskPayload = validSubtasks.map(s => ({
@@ -156,10 +148,7 @@ export default function TaskDialog({
             completed: s.completed || false,
             organization_id: profile.organization_id,
           }));
-          console.log('📤 TaskDialog: Subtask insert payload:', subtaskPayload);
-          const { error: stError } = await supabase.from('subtasks').insert(subtaskPayload);
-          if (stError) console.error('❌ TaskDialog: Subtask insert error:', stError);
-          else console.log('✅ TaskDialog: Subtasks created');
+          await supabase.from('subtasks').insert(subtaskPayload);
         }
 
         toast.success('To-Do created');
@@ -167,7 +156,6 @@ export default function TaskDialog({
         if (onSave) onSave(newTask);
       }
     } catch (err) {
-      console.error('💥 TaskDialog: Unexpected error:', err);
       toast.error(`Error: ${err.message}`);
     } finally {
       setSaving(false);
