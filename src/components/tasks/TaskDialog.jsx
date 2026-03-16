@@ -140,7 +140,6 @@ export default function TaskDialog({
             task_id: newTask.id,
             title: s.title.trim(),
             completed: s.completed || false,
-            organization_id: profile.organization_id,
           }));
           await supabase.from('subtasks').insert(subtaskPayload);
         }
