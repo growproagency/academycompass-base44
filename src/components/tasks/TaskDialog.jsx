@@ -123,10 +123,7 @@ export default function TaskDialog({
         if (onSave) onSave();
       } else {
         // ---- CREATE ----
-        const createPayload = {
-          ...taskPayload,
-          created_by: user.id,
-        };
+        const createPayload = { ...taskPayload };
 
         const { data: newTask, error: createError } = await supabase
           .from('tasks')
