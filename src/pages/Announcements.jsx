@@ -61,8 +61,9 @@ export default function Announcements() {
       if (!profile?.organization_id) return [];
       const { data, error } = await supabase
         .from('announcements')
-        .select('id, title, content, organization_id, created_at')
+        .select('id, title, content, is_pinned, organization_id, created_at')
         .eq('organization_id', profile.organization_id)
+        .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false });
       if (error) {
         console.error('❌ Announcements query error:', error);
