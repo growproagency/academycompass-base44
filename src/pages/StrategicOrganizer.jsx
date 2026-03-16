@@ -252,6 +252,18 @@ export default function StrategicOrganizer() {
       if (data) setPlanId(data.id);
     }
 
+    // Clear form after save
+    setSchoolName("");
+    setMission("");
+    setBhag("");
+    setValuesBullets([""]);
+    setIcp("");
+    setThreeYear({});
+    setOneYear({});
+    setNinetyDay({});
+    setParkingLot([""]);
+    setFocusOfYear("");
+
     queryClient.invalidateQueries({ queryKey: ["strategic-plans"] });
     toast.success("Saved");
     setSaving(false);
