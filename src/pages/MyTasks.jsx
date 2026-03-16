@@ -67,30 +67,67 @@ export default function MyTasks() {
         organizationId: profile.organization_id, 
         userEmail: user.email 
       });
-      const { data, error } = await supabase
+      // Step 1: Fetch tasks (only real public.tasks columns)
+      const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
-        .select(`
-          *,
-          assignee:assigned_to (
-            id,
-            full_name
-          ),
-          subtasks (
-            id,
-            title,
-            completed,
-            sort_order
-          )
-        `)
+        .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to, repeat')
         .eq('organization_id', profile.organization_id);
-      if (error) {
-        console.error('❌ MyTasks: Tasks query error:', error);
+
+      if (tasksError) {
+        console.error('❌ MyTasks: Tasks query error:', tasksError);
+        console.error('🔍 MyTasks: Error details:', { message: tasksError.message, code: tasksError.code, hint: tasksError.hint });
         return [];
       }
-      console.log('✅ MyTasks: Tasks fetched:', data?.length || 0, 'tasks');
-      console.log('📊 MyTasks: Task statuses:', data?.map(t => t.status));
-      console.log('🔍 MyTasks: First task sample:', data?.[0]);
-      return data || [];
+
+      console.log('✅ MyTasks: Raw tasks fetched:', tasksData?.length || 0);
+      console.log('📊 MyTasks: Task statuses:', tasksData?.map(t => t.status));
+
+      if (!tasksData || tasksData.length === 0) return [];
+
+      // Step 2: Batch fetch assignees
+      const assigneeIds = [...new Set(tasksData.map(t => t.assigned_to).filter(Boolean))];
+      const assigneesMap = new Map();
+      if (assigneeIds.length > 0) {
+        const { data: assigneesData, error: assigneesError } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', assigneeIds);
+        if (assigneesError) {
+          console.error('❌ MyTasks: Assignees query error:', assigneesError);
+        } else {
+          console.log('✅ MyTasks: Assignees fetched:', assigneesData?.length || 0);
+          assigneesData?.forEach(a => assigneesMap.set(a.id, a));
+        }
+      }
+
+      // Step 3: Batch fetch subtasks (only real public.subtasks columns)
+      const taskIds = tasksData.map(t => t.id);
+      const { data: subtasksData, error: subtasksError } = await supabase
+        .from('subtasks')
+        .select('id, task_id, title, completed')
+        .in('task_id', taskIds);
+      if (subtasksError) {
+        console.error('❌ MyTasks: Subtasks query error:', subtasksError);
+      } else {
+        console.log('✅ MyTasks: Subtasks fetched:', subtasksData?.length || 0);
+      }
+
+      // Step 4: Group subtasks by task_id
+      const subtasksByTaskId = new Map();
+      subtasksData?.forEach(st => {
+        if (!subtasksByTaskId.has(st.task_id)) subtasksByTaskId.set(st.task_id, []);
+        subtasksByTaskId.get(st.task_id).push(st);
+      });
+
+      // Step 5: Combine
+      const result = tasksData.map(task => ({
+        ...task,
+        assignee: task.assigned_to ? assigneesMap.get(task.assigned_to) || null : null,
+        subtasks: subtasksByTaskId.get(task.id) || [],
+      }));
+
+      console.log('✅ MyTasks: Final combined tasks:', result.length);
+      return result;
     },
     enabled: !!profile?.organization_id && !!user?.email,
   });
@@ -393,23 +430,24 @@ export default function MyTasks() {
                 await supabase.from('subtasks').delete().in('id', toDelete);
               }
               
-              // Insert or update subtasks
-              for (let i = 0; i < subtasks.length; i++) {
-                const subtask = subtasks[i];
+              // Insert or update subtasks (only real public.subtasks columns)
+              for (const subtask of subtasks) {
+                if (!subtask.title?.trim()) continue;
                 const subtaskData = {
                   task_id: editTask.id,
-                  title: subtask.title,
+                  title: subtask.title.trim(),
                   completed: subtask.completed || false,
-                  sort_order: i,
-                  organization_id: profile.organization_id,
                 };
-                
+                console.log('📤 MyTasks: Subtask payload:', subtaskData);
+
                 if (subtask.id && existingIds.has(subtask.id)) {
-                  console.log('📝 MyTasks: Updating subtask:', subtask.id);
-                  await supabase.from('subtasks').update(subtaskData).eq('id', subtask.id);
+                  const { error: updateErr } = await supabase.from('subtasks').update(subtaskData).eq('id', subtask.id);
+                  if (updateErr) console.error('❌ MyTasks: Update subtask error:', updateErr);
+                  else console.log('📝 MyTasks: Updated subtask:', subtask.id);
                 } else {
-                  console.log('➕ MyTasks: Inserting new subtask:', subtaskData);
-                  await supabase.from('subtasks').insert([subtaskData]);
+                  const { error: insertErr } = await supabase.from('subtasks').insert([subtaskData]);
+                  if (insertErr) console.error('❌ MyTasks: Insert subtask error:', insertErr);
+                  else console.log('➕ MyTasks: Inserted new subtask');
                 }
               }
               
@@ -448,13 +486,15 @@ export default function MyTasks() {
             // Create subtasks if any
             if (subtasks && subtasks.length > 0) {
               console.log('➕ MyTasks: Creating subtasks...');
-              const subtaskData = subtasks.map((st, idx) => ({
-                task_id: result.id,
-                title: st.title,
-                completed: st.completed || false,
-                sort_order: idx,
-                organization_id: profile.organization_id,
-              }));
+              // Only real public.subtasks columns
+              const subtaskData = subtasks
+                .filter(st => st.title?.trim())
+                .map(st => ({
+                  task_id: result.id,
+                  title: st.title.trim(),
+                  completed: st.completed || false,
+                }));
+              console.log('📤 MyTasks: Subtask insert payload:', subtaskData);
               
               const { error: subtaskError } = await supabase
                 .from('subtasks')
