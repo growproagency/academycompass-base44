@@ -427,6 +427,65 @@ export default function StrategicOrganizer() {
           Save Changes
         </Button>
       </div>
+
+      {/* History Modal */}
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Version History</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="text-sm text-muted-foreground p-4 text-center">
+              Version history tracking coming soon. Current version auto-saves.
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Modal */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Strategic Plan Preview</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 text-sm">
+            <div>
+              <h3 className="font-semibold text-lg mb-2">{schoolName || "School Name"}</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Mission</p>
+                  <p className="text-sm">{mission || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">BHAG</p>
+                  <p className="text-sm">{bhag || "N/A"}</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Values</p>
+              <p className="text-sm">{valuesBullets.filter(v => v).join(", ") || "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Ideal Customer Profile</p>
+              <p className="text-sm">{icp || "N/A"}</p>
+            </div>
+            <div className="pt-4 border-t">
+              <h4 className="font-semibold mb-3">Vision & Goals</h4>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs font-semibold">3 Year Vision</p>
+                  <p className="text-xs text-muted-foreground">Target: {threeYear?.target_date || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold">1 Year Goal</p>
+                  <p className="text-xs text-muted-foreground">Target: {oneYear?.target_date || "N/A"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
