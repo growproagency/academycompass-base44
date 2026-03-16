@@ -63,7 +63,7 @@ export default function Announcements() {
         .from('announcements')
         .select('*')
         .eq('organization_id', profile.organization_id)
-        .order('created_date', { ascending: false });
+        .order('created_at', { ascending: false });
       if (error) {
         console.error('❌ Announcements query error:', error);
         return [];
@@ -226,7 +226,7 @@ export default function Announcements() {
                     </Badge>
                   )}
                   <span className="text-[10px] text-muted-foreground">
-                    {format(new Date(ann.created_date), "MMM d, yyyy")}
+                    {ann.created_at ? format(new Date(ann.created_at), "MMM d, yyyy") : ""}
                   </span>
                 </div>
                 <h3 className="font-semibold">{ann.title}</h3>

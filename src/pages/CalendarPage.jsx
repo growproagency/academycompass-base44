@@ -177,12 +177,15 @@ export default function CalendarPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  {events.tasks.map((t) => (
-                    <div key={t.id} className="flex items-center gap-1 px-1.5 py-1 bg-card rounded border border-border/40 text-[10px]">
-                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`} />
-                      <span className="truncate">{t.title}</span>
-                    </div>
-                  ))}
+                  {events.tasks.map((t) => {
+                    const overdue = t.status !== 'done' && isPast(parseISO(t.due_date));
+                    return (
+                      <div key={t.id} className={`flex items-center gap-1 px-1.5 py-1 rounded border text-[10px] cursor-pointer hover:opacity-80 transition-opacity ${overdue ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-card border-border/40'}`}>
+                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`} />
+                        <span className="truncate">{t.title}</span>
+                      </div>
+                    );
+                  })}
                   {events.milestones.map((m) => (
                     <div key={m.id} className="flex items-center gap-1 px-1.5 py-1 bg-violet-500/10 rounded border border-violet-500/20 text-[10px] text-violet-400">
                       <span className="truncate">{m.title}</span>
@@ -217,12 +220,15 @@ export default function CalendarPage() {
                     </span>
                   </div>
                   <div className="space-y-0.5">
-                    {events.tasks.slice(0, 3).map((t) => (
-                      <div key={t.id} className="flex items-center gap-0.5 text-[9px] truncate">
-                        <div className={`w-1 h-1 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`} />
-                        <span className="truncate">{t.title}</span>
-                      </div>
-                    ))}
+                    {events.tasks.slice(0, 3).map((t) => {
+                      const overdue = t.status !== 'done' && isPast(parseISO(t.due_date));
+                      return (
+                        <div key={t.id} className={`flex items-center gap-0.5 text-[9px] truncate cursor-pointer hover:opacity-80 ${overdue ? 'text-red-400' : ''}`}>
+                          <div className={`w-1 h-1 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`} />
+                          <span className="truncate">{t.title}</span>
+                        </div>
+                      );
+                    })}
                     {events.tasks.length > 3 && (
                       <span className="text-[9px] text-muted-foreground">+{events.tasks.length - 3} more</span>
                     )}
