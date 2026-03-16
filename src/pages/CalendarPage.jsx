@@ -224,9 +224,14 @@ export default function CalendarPage() {
                           <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`} />
                           <span className="truncate font-medium">{t.title}</span>
                         </div>
-                        {isAdmin && (
-                          <span className="truncate text-muted-foreground pl-2.5">{t.assignee_name || 'Unassigned'}</span>
-                        )}
+                        <div className="flex items-center gap-1 pl-2.5 text-[9px]">
+                          <span className={`px-1.5 py-0.5 rounded-full font-medium capitalize ${STATUS_BADGE[t.status]}`}>
+                            {t.status === 'in_progress' ? 'In Progress' : t.status}
+                          </span>
+                          {isAdmin && (
+                            <span className="text-muted-foreground">{t.assignee_name || 'Unassigned'}</span>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
