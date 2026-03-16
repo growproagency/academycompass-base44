@@ -4,13 +4,15 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Loader2, Save, Star, Target, Users, Rocket, TrendingUp,
   Calendar, Clock, DollarSign, ArrowRight, CheckCircle2, Plus, Trash2,
-  Eye, Download, History,
+  Eye, Download, History, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/components/lib/SupabaseAuthContext";
+import jsPDF from "jspdf";
 
 // Bullet list editor
 function BulletList({ items, onChange, placeholder }) {
