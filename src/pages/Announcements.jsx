@@ -85,7 +85,7 @@ export default function Announcements() {
   const openEdit = (ann) => {
     setEditAnn(ann);
     setTitle(ann.title);
-    setBody(ann.body);
+    setBody(ann.content);
     setFormOpen(true);
   };
 
