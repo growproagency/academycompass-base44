@@ -71,16 +71,24 @@ export default function MyTasks() {
       console.log('👤 MyTasks: User role:', profile?.role, '| profile.id:', profile?.id);
 
       // Step 1: Fetch tasks assigned to the current user only (personal view)
-      const { data: tasksData, error: tasksError } = await supabase
+      let { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to, archived_at')
         .eq('organization_id', profile.organization_id)
         .eq('assigned_to', profile.id);
 
       if (tasksError) {
-        console.error('❌ MyTasks: Tasks query error:', tasksError);
-        console.error('🔍 MyTasks: Error details:', { message: tasksError.message, code: tasksError.code, hint: tasksError.hint });
-        return [];
+        console.warn('⚠️ MyTasks: Query with archived_at failed, retrying without it:', tasksError.message);
+        const fallback = await supabase
+          .from('tasks')
+          .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to')
+          .eq('organization_id', profile.organization_id)
+          .eq('assigned_to', profile.id);
+        tasksData = fallback.data;
+        if (fallback.error) {
+          console.error('❌ MyTasks: Fallback query also failed:', fallback.error);
+          return [];
+        }
       }
 
       console.log('✅ MyTasks: Raw tasks fetched (assigned to me):', tasksData?.length || 0);
