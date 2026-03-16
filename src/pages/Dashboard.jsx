@@ -62,7 +62,7 @@ export default function Dashboard() {
         console.warn('⚠️ Dashboard: Tasks query with archived_at failed, retrying without it:', tasksError.message);
         const fallback = await supabase
           .from('tasks')
-          .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to')
+          .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to, repeat')
           .eq('organization_id', profile.organization_id);
         tasksData = fallback.data;
         if (fallback.error) {
