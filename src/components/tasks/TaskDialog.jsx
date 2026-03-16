@@ -248,16 +248,27 @@ export default function TaskDialog({
   const handleArchive = async () => {
     if (!task || !isAdmin) return;
     setArchiving(true);
+    const archivePayload = { archived_at: new Date().toISOString() };
     console.log('📦 TaskDialog: Archiving task:', task.id);
-    const { error } = await supabase
-      .from('tasks')
-      .update({ archived_at: new Date().toISOString(), archived_by: user?.id || null })
-      .eq('id', task.id);
+    console.log('📦 TaskDialog: Archive payload:', archivePayload);
+
+    // Try with archived_by first; if column doesn't exist, retry without it
+    const tryArchive = async (payload) => {
+      const { error } = await supabase.from('tasks').update(payload).eq('id', task.id);
+      return error;
+    };
+
+    let error = await tryArchive({ ...archivePayload, archived_by: user?.id || null });
+    if (error && (error.message?.includes('archived_by') || error.code === '42703')) {
+      console.warn('⚠️ TaskDialog: archived_by column not found, retrying without it');
+      error = await tryArchive(archivePayload);
+    }
+
     if (error) {
       console.error('❌ TaskDialog: Archive error:', error);
       toast.error(`Failed to archive: ${error.message}`);
     } else {
-      console.log('✅ TaskDialog: Task archived');
+      console.log('✅ TaskDialog: Task archived successfully');
       toast.success('Task archived');
       onOpenChange(false);
       if (onArchive) onArchive();
