@@ -70,8 +70,11 @@ export default function TaskDialog({
   }, [open, task, defaultStatus]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.title.trim()) return;
+    if (e?.preventDefault) e.preventDefault();
+    if (!form.title.trim()) {
+      toast.error('Title is required');
+      return;
+    }
 
     console.log('🔘 TaskDialog: Update/Create clicked');
     console.log('📋 TaskDialog: Form data:', form);
