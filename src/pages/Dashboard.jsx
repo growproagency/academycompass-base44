@@ -125,8 +125,8 @@ export default function Dashboard() {
       console.log('🗄️ Dashboard: Active (non-archived) tasks:', activeTasks.length, '| Total:', tasksData.length);
       const tasksWithRelations = activeTasks.map(task => ({
         ...task,
-        assignee: task.assigned_to ? assigneesMap.get(task.assigned_to) : null,
-        subtasks: subtasksByTaskId.get(task.id) || []
+        assignee: task.assigned_to ? assigneesMap.get(task.assigned_to) || null : null,
+        subtasks: subtasksByTaskId.get(task.id) || [],
       }));
       
       console.log('✅ Dashboard: Final tasks with relations:', tasksWithRelations.length);
