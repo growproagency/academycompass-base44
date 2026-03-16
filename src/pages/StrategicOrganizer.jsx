@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Loader2, Save, Star, Target, Users, Rocket, TrendingUp,
   Calendar, Clock, DollarSign, ArrowRight, CheckCircle2, Plus, Trash2,
-  Eye, Download, History, X,
+  Eye, Download, History, X, RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
