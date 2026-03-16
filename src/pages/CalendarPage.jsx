@@ -35,6 +35,12 @@ const PRIORITY_DOT = {
   low: "bg-blue-400",
 };
 
+const STATUS_BADGE = {
+  todo: "bg-slate-500/20 text-slate-400",
+  in_progress: "bg-blue-500/20 text-blue-400",
+  done: "bg-emerald-500/20 text-emerald-400",
+};
+
 export default function CalendarPage() {
   const [view, setView] = useState("weekly");
   const [currentDate, setCurrentDate] = useState(new Date());
