@@ -98,6 +98,7 @@ export default function TaskDialog({
         due_date: taskFields.due_date || null,
         assigned_to: taskFields.assigned_to || null,
         organization_id: profile.organization_id,
+        created_by: user?.id || null,
       };
 
       if (task) {
