@@ -522,7 +522,7 @@ export default function Dashboard() {
             <Pin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold">{announcements[0].title}</p>
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{announcements[0].body}</p>
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{announcements[0].content}</p>
             </div>
             <Link to="/Announcements">
               <Button variant="ghost" size="sm" className="text-xs shrink-0">
