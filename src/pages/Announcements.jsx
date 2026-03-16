@@ -97,6 +97,12 @@ export default function Announcements() {
       toast.error("Only admins can post announcements");
       return;
     }
+    console.log('👤 Announcements: user role:', profile?.role, '| isAdmin:', isAdmin, '| org:', profile?.organization_id);
+
+    if (!isAdmin) {
+      toast.error("Only admins can post announcements");
+      return;
+    }
 
     if (!title.trim() || !body.trim()) {
       toast.error("Title and body are required");
