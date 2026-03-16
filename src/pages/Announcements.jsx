@@ -165,8 +165,16 @@ export default function Announcements() {
   };
 
   const togglePin = async (ann) => {
-    // is_pinned requires the column to exist in Supabase first
-    toast.error("Run: ALTER TABLE announcements ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT false; in Supabase first.");
+    const { error } = await supabase
+      .from('announcements')
+      .update({ is_pinned: !ann.is_pinned })
+      .eq('id', ann.id);
+    if (error) {
+      toast.error(`Failed to ${ann.is_pinned ? 'unpin' : 'pin'}: ${error.message}`);
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["announcements"] });
+    toast.success(ann.is_pinned ? "Unpinned" : "Pinned");
   };
 
   const handleDelete = async () => {
