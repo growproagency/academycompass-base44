@@ -54,7 +54,6 @@ export default function CalendarPage() {
         .from('tasks')
         .select('id, title, status, priority, due_date, assigned_to')
         .eq('organization_id', profile.organization_id)
-        .is('archived_at', null)
         .not('due_date', 'is', null);
       if (error) {
         console.error('❌ Calendar: Tasks query error:', error);

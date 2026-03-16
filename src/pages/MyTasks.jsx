@@ -73,10 +73,9 @@ export default function MyTasks() {
       // Step 1: Fetch tasks assigned to the current user only (personal view)
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
-        .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to')
+        .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to, archived_at')
         .eq('organization_id', profile.organization_id)
-        .eq('assigned_to', profile.id)
-        .is('archived_at', null);
+        .eq('assigned_to', profile.id);
 
       if (tasksError) {
         console.error('❌ MyTasks: Tasks query error:', tasksError);
