@@ -247,7 +247,7 @@ export default function Announcements() {
                   </span>
                 </div>
                 <h3 className="font-semibold">{ann.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{ann.body}</p>
+                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{ann.content}</p>
               </div>
               {isAdmin && (
                 <div className="flex items-center gap-1 shrink-0">
