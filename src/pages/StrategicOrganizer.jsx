@@ -143,6 +143,7 @@ function parseJSON(val, fallback) {
 
 export default function StrategicOrganizer() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [planId, setPlanId] = useState(null);
