@@ -198,14 +198,15 @@ export default function TaskDialog({
     // Insert/update
     for (const st of subtasks) {
       if (!st.title?.trim()) continue;
-      const payload = { task_id: taskId, title: st.title.trim(), completed: st.completed || false };
-      console.log('📤 TaskDialog: Subtask upsert payload:', payload);
+      const basePayload = { task_id: taskId, title: st.title.trim(), completed: st.completed || false };
 
       if (st.id && existingIds.has(st.id)) {
-        const { error } = await supabase.from('subtasks').update(payload).eq('id', st.id);
+        const { error } = await supabase.from('subtasks').update(basePayload).eq('id', st.id);
         if (error) console.error('❌ TaskDialog: Update subtask error:', error);
       } else {
-        const { error } = await supabase.from('subtasks').insert([payload]);
+        // New subtask — include organization_id for RLS
+        const insertPayload = { ...basePayload, organization_id: profile?.organization_id };
+        const { error } = await supabase.from('subtasks').insert([insertPayload]);
         if (error) console.error('❌ TaskDialog: Insert subtask error:', error);
       }
     }
