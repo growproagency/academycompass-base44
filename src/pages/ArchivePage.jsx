@@ -1,5 +1,6 @@
 import React from "react";
 import { supabase } from "@/components/lib/supabaseClient";
+import { useAuth } from "@/components/lib/SupabaseAuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Archive, RotateCcw, Trash2, Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,16 +22,26 @@ import {
 export default function ArchivePage() {
   const [deleteTask, setDeleteTask] = React.useState(null);
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
 
   const { data: archivedTasks = [], isLoading } = useQuery({
-    queryKey: ["archived-tasks"],
+    queryKey: ["archived-tasks", profile?.organization_id],
     queryFn: async () => {
+      if (!profile?.organization_id) return [];
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
-        .not('archived_at', 'is', null);
+        .select('id, title, priority, due_date, status, archived_at')
+        .eq('organization_id', profile.organization_id)
+        .not('archived_at', 'is', null)
+        .order('archived_at', { ascending: false });
+      if (error) {
+        console.error('❌ ArchivePage: Query error:', error);
+        return [];
+      }
+      console.log('✅ ArchivePage: Archived tasks fetched:', data?.length || 0);
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   const updateTask = useMutation({

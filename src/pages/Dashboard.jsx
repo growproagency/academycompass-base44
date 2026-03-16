@@ -333,6 +333,8 @@ export default function Dashboard() {
     updateTask.mutate({ id: task.id, data: { status: newStatus } });
   };
 
+  // handleCreateTask and handleUpdateTask are now handled inside TaskDialog itself.
+  // These are kept as no-ops for backward compat but TaskDialog calls onSave() after save.
   const handleCreateTask = async (formData) => {
     console.log('💾 Dashboard: handleCreateTask called with data:', formData);
     try {
@@ -668,7 +670,16 @@ export default function Dashboard() {
         user={authUser}
         profile={profile}
         defaultStatus={createStatus}
-        onSave={editingTask ? handleUpdateTask : handleCreateTask}
+        onSave={() => {
+          queryClient.invalidateQueries({ queryKey: ["tasks-active"] });
+          setCreateOpen(false);
+          setEditingTask(null);
+        }}
+        onArchive={() => {
+          queryClient.invalidateQueries({ queryKey: ["tasks-active"] });
+          setCreateOpen(false);
+          setEditingTask(null);
+        }}
       />
     </div>
   );
