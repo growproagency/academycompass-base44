@@ -25,7 +25,7 @@ import { toast } from "sonner";
 export default function TaskDialog({
   open, onOpenChange, task, rocks, users, onSave, onArchive,
   defaultStatus, user, profile
-}) {
+})  {
   const [form, setForm] = useState({
     title: "",
     description: "",
