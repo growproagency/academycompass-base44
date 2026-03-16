@@ -1,80 +1,215 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/components/lib/supabaseClient";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Loader2,
-  Save,
-  Star,
-  Target,
-  Users,
-  Rocket,
-  Mountain,
-  Lightbulb,
-  TrendingUp,
-  Calendar,
+  Loader2, Save, Star, Target, Users, Rocket, TrendingUp,
+  Calendar, Clock, DollarSign, ArrowRight, CheckCircle2, Plus, Trash2,
+  Eye, Download, History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useAuth } from "@/components/lib/SupabaseAuthContext";
 
-const SECTIONS = [
-  { key: "school_name", label: "School Name", icon: Mountain, type: "input", placeholder: "Your Academy Name" },
-  { key: "mission", label: "Mission", icon: Star, type: "textarea", placeholder: "Why does your school exist?" },
-  { key: "values", label: "Core Values", icon: Target, type: "textarea", placeholder: "What principles guide your school?" },
-  { key: "ideal_customer_profile", label: "Ideal Customer Profile", icon: Users, type: "textarea", placeholder: "Who is your ideal student?" },
-  { key: "bhag", label: "Big Hairy Audacious Goal", icon: Rocket, type: "textarea", placeholder: "10-25 year goal..." },
-  { key: "three_year_visual", label: "3-Year Visual", icon: TrendingUp, type: "textarea", placeholder: "What does your school look like in 3 years?" },
-  { key: "one_year_goal", label: "1-Year Goal", icon: Calendar, type: "textarea", placeholder: "What must you achieve this year?" },
-  { key: "ninety_day_project", label: "90-Day Project", icon: Lightbulb, type: "textarea", placeholder: "Current quarter focus..." },
-  { key: "focus_of_the_year", label: "Focus of the Year", icon: Star, type: "textarea", placeholder: "One word or phrase that captures this year..." },
-  { key: "parking_lot", label: "Parking Lot", icon: Lightbulb, type: "textarea", placeholder: "Ideas to revisit later..." },
-];
+// Bullet list editor
+function BulletList({ items, onChange, placeholder }) {
+  const bullets = items?.length ? items : [""];
+
+  const update = (idx, val) => {
+    const next = [...bullets];
+    next[idx] = val;
+    onChange(next);
+  };
+
+  const add = () => onChange([...bullets, ""]);
+
+  const remove = (idx) => {
+    const next = bullets.filter((_, i) => i !== idx);
+    onChange(next.length ? next : [""]);
+  };
+
+  return (
+    <div className="space-y-1.5">
+      {bullets.map((b, i) => (
+        <div key={i} className="flex items-center gap-1.5 group">
+          <span className="text-muted-foreground text-sm">•</span>
+          <Input
+            value={b}
+            onChange={(e) => update(i, e.target.value)}
+            placeholder={placeholder}
+            className="h-7 text-sm bg-muted/30 border-0 focus-visible:ring-1"
+          />
+          {bullets.length > 1 && (
+            <button
+              onClick={() => remove(i)}
+              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      ))}
+      <button
+        onClick={add}
+        className="flex items-center gap-1 text-xs text-primary/70 hover:text-primary mt-1 ml-4"
+      >
+        <Plus className="w-3 h-3" /> Add bullet
+      </button>
+    </div>
+  );
+}
+
+// Section with target date + metrics + key achievements
+function VisionGoalSection({ title, icon: Icon, iconColor, data, onChange }) {
+  const update = (field, val) => onChange({ ...data, [field]: val });
+
+  return (
+    <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card">
+      <h3 className={`font-semibold text-base flex items-center gap-2 ${iconColor}`}>
+        <Icon className="w-4 h-4" /> {title}
+      </h3>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
+            <Calendar className="w-3 h-3" /> Target Date
+          </p>
+          <Input
+            type="date"
+            value={data?.target_date || ""}
+            onChange={(e) => update("target_date", e.target.value)}
+            className="h-8 text-xs"
+          />
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
+            <DollarSign className="w-3 h-3" /> Revenue Target
+          </p>
+          <Input
+            value={data?.revenue_target || ""}
+            onChange={(e) => update("revenue_target", e.target.value)}
+            placeholder="e.g. $500,000"
+            className="h-8 text-xs"
+          />
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
+            <Users className="w-3 h-3" /> Student Target
+          </p>
+          <Input
+            value={data?.student_target || ""}
+            onChange={(e) => update("student_target", e.target.value)}
+            placeholder="e.g. 250 students"
+            className="h-8 text-xs"
+          />
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
+            <ArrowRight className="w-3 h-3" /> Net Profit Target
+          </p>
+          <Input
+            value={data?.net_profit_target || ""}
+            onChange={(e) => update("net_profit_target", e.target.value)}
+            placeholder="e.g. $120,000"
+            className="h-8 text-xs"
+          />
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
+          Key Achievements / Milestones
+        </p>
+        <BulletList
+          items={data?.bullets || [""]}
+          onChange={(v) => update("bullets", v)}
+          placeholder="What does success look like?"
+        />
+      </div>
+    </div>
+  );
+}
+
+// Parse JSON safely
+function parseJSON(val, fallback) {
+  if (!val) return fallback;
+  if (typeof val === "object") return val;
+  try { return JSON.parse(val); } catch { return fallback; }
+}
 
 export default function StrategicOrganizer() {
-  const [form, setForm] = useState({});
-  const [planId, setPlanId] = useState(null);
-  const [saving, setSaving] = useState(false);
+  const { profile } = useAuth();
   const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
+  const [planId, setPlanId] = useState(null);
+
+  const [schoolName, setSchoolName] = useState("");
+  const [mission, setMission] = useState("");
+  const [bhag, setBhag] = useState("");
+  const [valuesBullets, setValuesBullets] = useState([""]);
+  const [icp, setIcp] = useState("");
+  const [threeYear, setThreeYear] = useState({});
+  const [oneYear, setOneYear] = useState({});
+  const [ninetyDay, setNinetyDay] = useState({});
+  const [parkingLot, setParkingLot] = useState([""]);
+  const [focusOfYear, setFocusOfYear] = useState("");
 
   const { data: plans = [], isLoading } = useQuery({
-    queryKey: ["strategic-plans"],
+    queryKey: ["strategic-plans", profile?.organization_id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('strategic_plans').select('*');
+      if (!profile?.organization_id) return [];
+      const { data } = await supabase
+        .from("strategic_plans")
+        .select("*")
+        .eq("organization_id", profile.organization_id);
       return data || [];
     },
+    enabled: !!profile?.organization_id,
   });
 
   useEffect(() => {
     if (plans.length > 0) {
-      const plan = plans[0];
-      setPlanId(plan.id);
-      setForm({
-        school_name: plan.school_name || "",
-        mission: plan.mission || "",
-        values: plan.values || "",
-        ideal_customer_profile: plan.ideal_customer_profile || "",
-        bhag: plan.bhag || "",
-        three_year_visual: plan.three_year_visual || "",
-        one_year_goal: plan.one_year_goal || "",
-        ninety_day_project: plan.ninety_day_project || "",
-        parking_lot: plan.parking_lot || "",
-        focus_of_the_year: plan.focus_of_the_year || "",
-      });
+      const p = plans[0];
+      setPlanId(p.id);
+      setSchoolName(p.school_name || "");
+      setMission(p.mission || "");
+      setBhag(p.bhag || "");
+      setValuesBullets(parseJSON(p.values, [""]));
+      setIcp(p.ideal_customer_profile || "");
+      setThreeYear(parseJSON(p.three_year_visual, {}));
+      setOneYear(parseJSON(p.one_year_goal, {}));
+      setNinetyDay(parseJSON(p.ninety_day_project, {}));
+      setParkingLot(parseJSON(p.parking_lot, [""]));
+      setFocusOfYear(p.focus_of_the_year || "");
     }
   }, [plans]);
 
   const handleSave = async () => {
     setSaving(true);
+    const payload = {
+      school_name: schoolName,
+      mission,
+      bhag,
+      values: JSON.stringify(valuesBullets),
+      ideal_customer_profile: icp,
+      three_year_visual: JSON.stringify(threeYear),
+      one_year_goal: JSON.stringify(oneYear),
+      ninety_day_project: JSON.stringify(ninetyDay),
+      parking_lot: JSON.stringify(parkingLot),
+      focus_of_the_year: focusOfYear,
+      organization_id: profile?.organization_id,
+    };
+
     if (planId) {
-      const { error } = await supabase.from('strategic_plans').update(form).eq('id', planId);
-      if (error) throw error;
+      const { error } = await supabase.from("strategic_plans").update(payload).eq("id", planId);
+      if (error) { toast.error(error.message); setSaving(false); return; }
     } else {
-      const { error } = await supabase.from('strategic_plans').insert([form]);
-      if (error) throw error;
+      const { data, error } = await supabase.from("strategic_plans").insert([payload]).select().single();
+      if (error) { toast.error(error.message); setSaving(false); return; }
+      if (data) setPlanId(data.id);
     }
+
     queryClient.invalidateQueries({ queryKey: ["strategic-plans"] });
     toast.success("Saved");
     setSaving(false);
@@ -89,48 +224,166 @@ export default function StrategicOrganizer() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Strategic Organizer</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Plan your school's strategic direction</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Define your school's vision, goals, and 90-day priorities.</p>
         </div>
-        <Button size="sm" onClick={handleSave} disabled={saving}>
-          {saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />}
-          Save
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button variant="outline" size="sm" disabled className="gap-1.5 text-xs">
+            <History className="w-3.5 h-3.5" /> History
+          </Button>
+          <Button variant="outline" size="sm" disabled className="gap-1.5 text-xs">
+            <Eye className="w-3.5 h-3.5" /> Preview
+          </Button>
+          <Button variant="outline" size="sm" disabled className="gap-1.5 text-xs">
+            <Download className="w-3.5 h-3.5" /> Download PDF
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1.5 text-xs">
+            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            Saved
+          </Button>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {SECTIONS.map((section) => {
-          const Icon = section.icon;
-          return (
-            <Card key={section.key} className={section.key === "school_name" ? "md:col-span-2" : ""}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Icon className="w-4 h-4 text-primary" />
-                  {section.label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {section.type === "input" ? (
-                  <Input
-                    value={form[section.key] || ""}
-                    onChange={(e) => setForm({ ...form, [section.key]: e.target.value })}
-                    placeholder={section.placeholder}
-                  />
-                ) : (
-                  <Textarea
-                    value={form[section.key] || ""}
-                    onChange={(e) => setForm({ ...form, [section.key]: e.target.value })}
-                    placeholder={section.placeholder}
-                    rows={4}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+      {/* School Name */}
+      <div className="border border-border/50 rounded-xl p-5 bg-card space-y-2">
+        <p className="text-xs font-semibold underline">School Name</p>
+        <Input
+          value={schoolName}
+          onChange={(e) => setSchoolName(e.target.value)}
+          placeholder="e.g. Dragon's Den Martial Arts"
+          className="max-w-sm bg-muted/30"
+        />
+        <p className="text-[10px] text-muted-foreground">Appears as the header on your exported PDF</p>
+      </div>
+
+      {/* FOUNDATION */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Foundation</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Mission */}
+          <div className="border border-border/50 rounded-xl p-5 space-y-3 bg-card">
+            <h3 className="font-semibold text-sm flex items-center gap-2 text-blue-400">
+              <Target className="w-4 h-4" /> Mission
+            </h3>
+            <Textarea
+              value={mission}
+              onChange={(e) => setMission(e.target.value)}
+              placeholder="Why does your school exist? What do you do and for whom?"
+              rows={3}
+              className="text-sm bg-muted/30 border-0 focus-visible:ring-1 resize-none"
+            />
+          </div>
+
+          {/* BHAG */}
+          <div className="border border-border/50 rounded-xl p-5 space-y-3 bg-card">
+            <h3 className="font-semibold text-sm flex items-center gap-2 text-amber-400">
+              <Star className="w-4 h-4" /> BHAG
+            </h3>
+            <Textarea
+              value={bhag}
+              onChange={(e) => setBhag(e.target.value)}
+              placeholder="Your Big Hairy Audacious Goal — the 10–25 year moonshot."
+              rows={3}
+              className="text-sm bg-muted/30 border-0 focus-visible:ring-1 resize-none"
+            />
+          </div>
+
+          {/* Values */}
+          <div className="border border-border/50 rounded-xl p-5 space-y-3 bg-card">
+            <h3 className="font-semibold text-sm flex items-center gap-2 text-blue-400">
+              <Target className="w-4 h-4" /> Values
+            </h3>
+            <BulletList
+              items={valuesBullets}
+              onChange={setValuesBullets}
+              placeholder="e.g. Discipline, Respect, Excellence..."
+            />
+          </div>
+
+          {/* ICP */}
+          <div className="border border-border/50 rounded-xl p-5 space-y-3 bg-card">
+            <h3 className="font-semibold text-sm flex items-center gap-2 text-blue-400">
+              <Users className="w-4 h-4" /> Ideal Customer Profile
+            </h3>
+            <Textarea
+              value={icp}
+              onChange={(e) => setIcp(e.target.value)}
+              placeholder="Who is your ideal student / family? Age, goals, location, mindset..."
+              rows={3}
+              className="text-sm bg-muted/30 border-0 focus-visible:ring-1 resize-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* VISION & GOALS */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Vision &amp; Goals</p>
+        <VisionGoalSection
+          title="3 Year Vision"
+          icon={TrendingUp}
+          iconColor="text-blue-400"
+          data={threeYear}
+          onChange={setThreeYear}
+        />
+        <VisionGoalSection
+          title="1 Year Goal"
+          icon={TrendingUp}
+          iconColor="text-amber-400"
+          data={oneYear}
+          onChange={setOneYear}
+        />
+        <VisionGoalSection
+          title="90 Day Projects"
+          icon={Rocket}
+          iconColor="text-orange-400"
+          data={ninetyDay}
+          onChange={setNinetyDay}
+        />
+      </div>
+
+      {/* CAPTURE */}
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Capture</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Parking Lot */}
+          <div className="border border-border/50 rounded-xl p-5 space-y-3 bg-card">
+            <h3 className="font-semibold text-sm flex items-center gap-2 text-blue-400">
+              <CheckCircle2 className="w-4 h-4" /> The Parking Lot
+            </h3>
+            <BulletList
+              items={parkingLot}
+              onChange={setParkingLot}
+              placeholder="Ideas, initiatives, or projects to revisit later..."
+            />
+          </div>
+
+          {/* Focus of the Year */}
+          <div className="border border-border/50 rounded-xl p-5 space-y-3 bg-card">
+            <h3 className="font-semibold text-sm flex items-center gap-2 text-amber-400">
+              <Star className="w-4 h-4" /> Focus of the Year
+            </h3>
+            <Textarea
+              value={focusOfYear}
+              onChange={(e) => setFocusOfYear(e.target.value)}
+              placeholder="The single most important theme or initiative for this year."
+              rows={3}
+              className="text-sm bg-muted/30 border-0 focus-visible:ring-1 resize-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Save */}
+      <div className="flex justify-end pb-8">
+        <Button onClick={handleSave} disabled={saving} className="gap-2">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Save Changes
+        </Button>
       </div>
     </div>
   );
