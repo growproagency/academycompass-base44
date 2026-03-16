@@ -52,28 +52,26 @@ export default function Dashboard() {
       console.log('📡 Dashboard: Fetching tasks for organization:', profile.organization_id);
       
       // Step 1: Fetch tasks (only real public.tasks columns)
-      const { data: tasksData, error: tasksError } = await supabase
+      // Try fetching with archived_at; fall back without it if column doesn't exist
+      let { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to, archived_at')
         .eq('organization_id', profile.organization_id);
       
       if (tasksError) {
-        console.error('❌ Dashboard: Tasks query failed:', tasksError);
-        console.error('🔍 Dashboard: Error details:', {
-          message: tasksError.message,
-          code: tasksError.code,
-          details: tasksError.details,
-          hint: tasksError.hint
-        });
-        return [];
+        console.warn('⚠️ Dashboard: Tasks query with archived_at failed, retrying without it:', tasksError.message);
+        const fallback = await supabase
+          .from('tasks')
+          .select('id, organization_id, created_by, title, description, status, priority, due_date, created_at, assigned_to')
+          .eq('organization_id', profile.organization_id);
+        tasksData = fallback.data;
+        if (fallback.error) {
+          console.error('❌ Dashboard: Tasks fallback query also failed:', fallback.error);
+          return [];
+        }
       }
       
       console.log('✅ Dashboard: Raw tasks fetched:', tasksData?.length || 0);
-      console.log('📊 Dashboard: Task statuses breakdown:', {
-        todo: tasksData?.filter(t => t.status === 'todo').length || 0,
-        in_progress: tasksData?.filter(t => t.status === 'in_progress').length || 0,
-        done: tasksData?.filter(t => t.status === 'done').length || 0
-      });
       
       if (!tasksData || tasksData.length === 0) {
         console.log('ℹ️ Dashboard: No tasks found for organization');
