@@ -137,16 +137,20 @@ export default function Announcements() {
           title: title.trim(),
           body: body.trim(),
           organization_id: profile.organization_id,
+          is_pinned: false,
         };
         console.log('📤 Announcements: Creating announcement:', payload);
-        const { error } = await supabase.from('announcements').insert([payload]);
+        console.log('👤 Auth user id:', user?.id, '| profile auth_user_id:', profile?.auth_user_id);
+        const { data: insertData, error } = await supabase.from('announcements').insert([payload]).select();
         if (error) {
           console.error('❌ Announcements: Insert error:', error);
+          console.error('📋 Error code:', error.code, '| message:', error.message, '| details:', error.details, '| hint:', error.hint);
           console.error('📋 Failed payload:', payload);
           toast.error(`Failed to create: ${error.message}`);
           setSaving(false);
           return;
         }
+        console.log('✅ Announcements: Insert result:', insertData);
         console.log('✅ Announcements: Created successfully');
         toast.success("Announcement posted");
       }
