@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { supabase } from "@/components/lib/supabaseClient";
 import { useAuth } from "@/components/lib/SupabaseAuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function ArchivePage() {
-  const [deleteTask, setDeleteTask] = React.useState(null);
+  const [deleteTask, setDeleteTask] = useState(null);
   const queryClient = useQueryClient();
   const { profile } = useAuth();
 
