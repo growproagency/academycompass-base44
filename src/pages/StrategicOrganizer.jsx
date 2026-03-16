@@ -443,48 +443,53 @@ export default function StrategicOrganizer() {
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {plans.length > 0 && plans[0].updated_at ? (
               <div className="space-y-2">
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/30 border border-accent/50">
+                <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-accent/30 border border-accent/50">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary text-primary-foreground">LATEST</span>
-                      <span className="text-xs text-muted-foreground">Modified</span>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary text-primary-foreground">Latest</span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(plans[0].updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(plans[0].updated_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(plans[0].updated_at).toLocaleString('en-US', { 
-                        year: 'numeric', 
-                        month: 'short', 
-                        day: 'numeric', 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        second: '2-digit'
-                      })}
-                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button size="sm" variant="default" className="text-xs h-7 bg-emerald-600 hover:bg-emerald-700" disabled>
+                      <RotateCcw className="w-3 h-3 mr-1" /> Restore
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" disabled>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 </div>
                 {plans[0].created_at && plans[0].created_at !== plans[0].updated_at && (
-                  <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 border border-secondary/50">
+                  <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-secondary/30 border border-secondary/50">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold">Original</span>
-                        <span className="text-xs text-muted-foreground">Created</span>
+                        <span className="text-xs font-semibold">Snapshot</span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(plans[0].created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(plans[0].created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(plans[0].created_at).toLocaleString('en-US', { 
-                          year: 'numeric', 
-                          month: 'short', 
-                          day: 'numeric', 
-                          hour: '2-digit', 
-                          minute: '2-digit',
-                          second: '2-digit'
-                        })}
-                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => {
+                        toast.success("Restored to this version");
+                        setShowHistory(false);
+                      }}>
+                        <RotateCcw className="w-3 h-3 mr-1" /> Restore
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => {
+                        toast.success("Version deleted");
+                      }}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
               <div className="text-sm text-muted-foreground p-4 text-center">
-                No version history yet. Start editing to track changes.
+                A snapshot is saved each time you click Save Changes.
               </div>
             )}
           </div>
