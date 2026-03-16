@@ -97,7 +97,6 @@ export default function TaskDialog({
         priority: taskFields.priority,
         due_date: taskFields.due_date || null,
         assigned_to: taskFields.assigned_to || null,
-        rock_id: taskFields.rock_id || null,
         organization_id: profile.organization_id,
       };
 
