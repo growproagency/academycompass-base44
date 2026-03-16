@@ -135,7 +135,7 @@ export default function Announcements() {
       } else {
         const payload = {
           title: title.trim(),
-          body: body.trim(),
+          content: body.trim(),
           organization_id: profile.organization_id,
           is_pinned: false,
         };
