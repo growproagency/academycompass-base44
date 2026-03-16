@@ -44,24 +44,24 @@ export default function Layout() {
 
   const { user: authUser, profile } = useAuth();
 
-  const { data: tasks } = useQuery({
-    queryKey: ["tasks-overdue-count", profile?.organization_id],
+  const { data: myTaskCount } = useQuery({
+    queryKey: ["tasks-my-count", profile?.id, profile?.organization_id],
     queryFn: async () => {
-      if (!profile?.organization_id) return [];
-      const { data, error } = await supabase
+      if (!profile?.organization_id || !profile?.id) return 0;
+      const { count, error } = await supabase
         .from('tasks')
-        .select('*')
+        .select('id', { count: 'exact', head: true })
         .eq('organization_id', profile.organization_id)
-        .eq('status', 'todo');
-      return data || [];
+        .eq('assigned_to', profile.id)
+        .neq('status', 'done')
+        .is('archived_at', null);
+      return count || 0;
     },
-    initialData: [],
-    enabled: !!profile?.organization_id,
+    initialData: 0,
+    enabled: !!profile?.organization_id && !!profile?.id,
   });
 
-  const overdueCount = tasks.filter(
-    (t) => t.due_date && new Date(t.due_date) < new Date() && t.status !== "done"
-  ).length;
+  const overdueCount = myTaskCount;
 
   const isAdmin = profile?.role === "admin";
   const initials = profile?.full_name?.charAt(0)?.toUpperCase() || authUser?.email?.charAt(0)?.toUpperCase() || "U";
