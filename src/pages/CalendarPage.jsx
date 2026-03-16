@@ -270,19 +270,24 @@ export default function CalendarPage() {
                   </div>
                   <div className="space-y-0.5">
                     {events.tasks.slice(0, 3).map((t) => {
-                      const overdue = t.status !== 'done' && isPast(parseISO(t.due_date));
-                      return (
-                        <div key={t.id} className={`flex flex-col gap-0 text-[9px] cursor-pointer hover:opacity-80 ${overdue ? 'text-red-400' : ''}`}>
-                          <div className="flex items-center gap-0.5">
-                            <div className={`w-1 h-1 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`} />
-                            <span className="truncate">{t.title}</span>
-                          </div>
-                          {isAdmin && t.assignee_name && (
-                            <span className="truncate text-muted-foreground pl-1.5">{t.assignee_name}</span>
-                          )}
-                        </div>
-                      );
-                    })}
+                       const overdue = t.status !== 'done' && isPast(parseISO(t.due_date));
+                       return (
+                         <div key={t.id} className={`flex flex-col gap-0 text-[9px] cursor-pointer hover:opacity-80 ${overdue ? 'text-red-400' : ''}`}>
+                           <div className="flex items-center gap-0.5">
+                             <div className={`w-1 h-1 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`} />
+                             <span className="truncate">{t.title}</span>
+                           </div>
+                           <div className="flex items-center gap-0.5 pl-1.5">
+                             <span className={`px-1 py-0 rounded text-[8px] font-medium capitalize ${STATUS_BADGE[t.status]}`}>
+                               {t.status === 'in_progress' ? 'In Prog' : t.status === 'done' ? 'Done' : 'Todo'}
+                             </span>
+                             {isAdmin && t.assignee_name && (
+                               <span className="truncate text-muted-foreground">{t.assignee_name}</span>
+                             )}
+                           </div>
+                         </div>
+                       );
+                     })}
                     {events.tasks.length > 3 && (
                       <span className="text-[9px] text-muted-foreground">+{events.tasks.length - 3} more</span>
                     )}
