@@ -91,7 +91,7 @@ export default function MyTasks() {
       if (!activeTasksData || activeTasksData.length === 0) return [];
 
       // Step 2: Batch fetch assignees
-      const assigneeIds = [...new Set(tasksData.map(t => t.assigned_to).filter(Boolean))];
+      const assigneeIds = [...new Set(activeTasksData.map(t => t.assigned_to).filter(Boolean))];
       const assigneesMap = new Map();
       if (assigneeIds.length > 0) {
         const { data: assigneesData, error: assigneesError } = await supabase
@@ -107,7 +107,7 @@ export default function MyTasks() {
       }
 
       // Step 3: Batch fetch subtasks (only real public.subtasks columns)
-      const taskIds = tasksData.map(t => t.id);
+      const taskIds = activeTasksData.map(t => t.id);
       const { data: subtasksData, error: subtasksError } = await supabase
         .from('subtasks')
         .select('id, task_id, title, completed')
@@ -126,7 +126,7 @@ export default function MyTasks() {
       });
 
       // Step 5: Combine
-      const result = tasksData.map(task => ({
+      const result = activeTasksData.map(task => ({
         ...task,
         assignee: task.assigned_to ? assigneesMap.get(task.assigned_to) || null : null,
         subtasks: subtasksByTaskId.get(task.id) || [],
