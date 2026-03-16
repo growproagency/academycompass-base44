@@ -91,6 +91,13 @@ export default function Announcements() {
 
   const handleSave = async () => {
     console.log('🔘 Announcements: Save button clicked');
+    console.log('👤 Announcements: user role:', profile?.role, '| isAdmin:', isAdmin, '| org:', profile?.organization_id);
+
+    if (!isAdmin) {
+      toast.error("Only admins can post announcements");
+      return;
+    }
+
     if (!title.trim() || !body.trim()) {
       toast.error("Title and body are required");
       return;
