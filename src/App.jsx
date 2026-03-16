@@ -37,6 +37,7 @@ const AppRoutes = () => {
         <Route path="/Calendar" element={<CalendarPage />} />
         <Route path="/ArchivePage" element={<ArchivePage />} />
         <Route path="/StrategicOrganizer" element={<StrategicOrganizer />} />
+        <Route path="/StrategicOrganizerPreview" element={<StrategicOrganizerPreview />} />
         <Route path="/AdminPanel" element={<ProtectedRoute requireAdmin={true}><AdminPanel /></ProtectedRoute>} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
