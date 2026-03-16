@@ -171,7 +171,7 @@ export default function TaskDialog({
   };
 
   // Sync subtasks: delete removed, update existing, insert new
-  const syncSubtasks = async (taskId, subtasks) => {
+  const syncSubtasks = async (taskId, subtasks, profileData) => {
     console.log('🔄 TaskDialog: Syncing subtasks for task:', taskId);
 
     const { data: existing, error: fetchError } = await supabase
