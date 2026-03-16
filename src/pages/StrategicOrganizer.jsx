@@ -159,6 +159,44 @@ export default function StrategicOrganizer() {
   const [parkingLot, setParkingLot] = useState([""]);
   const [focusOfYear, setFocusOfYear] = useState("");
 
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    let yPos = 20;
+    const pageHeight = doc.internal.pageSize.height;
+    const margin = 20;
+    const maxWidth = doc.internal.pageSize.width - 2 * margin;
+
+    const addText = (text, fontSize = 12, bold = false) => {
+      if (yPos > pageHeight - 20) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFontSize(fontSize);
+      doc.setFont(undefined, bold ? "bold" : "normal");
+      const lines = doc.splitTextToSize(text, maxWidth);
+      doc.text(lines, margin, yPos);
+      yPos += lines.length * (fontSize / 3) + 5;
+    };
+
+    addText(schoolName || "Strategic Plan", 20, true);
+    yPos += 5;
+    addText("Mission", 14, true);
+    addText(mission, 11);
+    yPos += 3;
+    addText("BHAG", 14, true);
+    addText(bhag, 11);
+    yPos += 3;
+    addText("Values", 14, true);
+    addText(valuesBullets.filter(v => v).join(", "), 11);
+    yPos += 3;
+    addText("3 Year Vision", 14, true);
+    addText(`Target: ${threeYear?.target_date || "N/A"} | Revenue: ${threeYear?.revenue_target || "N/A"}`, 11);
+    addText(threeYear?.bullets?.filter(b => b).join(", ") || "N/A", 11);
+
+    doc.save(`${schoolName || "Strategic Plan"}.pdf`);
+    toast.success("PDF downloaded");
+  };
+
   const { data: plans = [], isLoading } = useQuery({
     queryKey: ["strategic-plans", profile?.organization_id],
     queryFn: async () => {
