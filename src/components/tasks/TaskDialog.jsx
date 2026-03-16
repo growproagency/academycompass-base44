@@ -205,7 +205,7 @@ export default function TaskDialog({
         if (error) console.error('❌ TaskDialog: Update subtask error:', error);
       } else {
         // New subtask — include organization_id for RLS
-        const insertPayload = { ...basePayload, organization_id: profile?.organization_id };
+        const insertPayload = { ...basePayload, organization_id: profileData?.organization_id || profile?.organization_id };
         const { error } = await supabase.from('subtasks').insert([insertPayload]);
         if (error) console.error('❌ TaskDialog: Insert subtask error:', error);
       }
