@@ -129,10 +129,7 @@ export default function SignIn() {
         </button>
       </div>
 
-      {/* Footer */}
-      <p className="mt-6 text-xs" style={{ color: "#4B5563" }}>
-        Powered by Grow Pro Agency
-      </p>
+
     </div>
   );
 }
