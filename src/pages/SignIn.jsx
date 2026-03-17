@@ -83,10 +83,10 @@ export default function SignIn() {
         />
 
         {/* Title */}
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#ffffff", marginBottom: 6, textAlign: "center" }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#ffffff", marginTop: -8, marginBottom: 4, textAlign: "center" }}>
           Welcome Back
         </h1>
-        <p style={{ fontSize: 14, color: "#94A3B8", marginBottom: 28, textAlign: "center" }}>
+        <p style={{ fontSize: 14, color: "#94A3B8", marginBottom: 20, textAlign: "center" }}>
           Sign in to Academy Compass
         </p>
 
