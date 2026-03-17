@@ -96,7 +96,6 @@ Deno.serve(async (req) => {
       const newTask = {
         title: task.title,
         description: task.description || null,
-        notes: task.notes || null,
         status: 'todo',
         priority: task.priority || 'medium',
         due_date: nextDueStr,
