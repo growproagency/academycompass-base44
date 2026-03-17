@@ -467,7 +467,7 @@ export default function StrategicOrganizer() {
           <DialogHeader>
             <DialogTitle>Version History</DialogTitle>
             <p className="text-xs text-muted-foreground mt-1">
-              A snapshot is saved each time you click Save Changes.{snapshots.length > 0 ? ` ${snapshots.length} snapshot${snapshots.length !== 1 ? "s" : ""} this session.` : ""}
+              A snapshot is saved each time you click Save Changes.{snapshots.length > 0 ? ` ${snapshots.length} snapshot${snapshots.length !== 1 ? "s" : ""} saved.` : ""}
             </p>
           </DialogHeader>
           <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
@@ -476,63 +476,87 @@ export default function StrategicOrganizer() {
                 No snapshots yet. Save your plan to create the first version.
               </div>
             ) : (
-              snapshots.map((snap, idx) => (
-                <div
-                  key={idx}
-                  className={`flex items-center justify-between gap-3 p-3 rounded-lg border ${idx === 0 ? "bg-primary/10 border-primary/30" : "bg-secondary/20 border-secondary/40"}`}
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      {idx === 0 && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary text-primary-foreground shrink-0">Latest</span>
+              snapshots.map((snap, idx) => {
+                const isActive = idx === activeSnapIdx;
+                const isLatest = idx === 0;
+                return (
+                  <div
+                    key={idx}
+                    className={`flex items-center justify-between gap-3 p-3 rounded-lg border transition-colors ${
+                      isActive
+                        ? "bg-primary/15 border-primary/50 ring-1 ring-primary/30"
+                        : "bg-secondary/20 border-secondary/40 hover:bg-secondary/40"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {isLatest && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary text-primary-foreground shrink-0">Latest</span>
+                        )}
+                        {isActive && !isLatest && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500 text-white shrink-0">Viewing</span>
+                        )}
+                        {isActive && isLatest && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-600 text-white shrink-0">Current</span>
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(snap.savedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {" at "}
+                          {new Date(snap.savedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        </span>
+                      </div>
+                      {snap.schoolName && (
+                        <p className="text-xs font-medium mt-0.5 truncate">{snap.schoolName}</p>
                       )}
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(snap.savedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        {" at "}
-                        {new Date(snap.savedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                      </span>
                     </div>
-                    {snap.schoolName && (
-                      <p className="text-xs font-medium mt-0.5 truncate">{snap.schoolName}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {idx !== 0 && (
+                    <div className="flex items-center gap-2 shrink-0">
+                      {!isActive && (
+                        <Button
+                          size="sm"
+                          variant={isLatest ? "outline" : "default"}
+                          className="text-xs h-7"
+                          onClick={() => {
+                            setSchoolName(snap.schoolName);
+                            setMission(snap.mission);
+                            setBhag(snap.bhag);
+                            setValuesBullets(snap.valuesBullets);
+                            setIcp(snap.icp);
+                            setThreeYear(snap.threeYear);
+                            setOneYear(snap.oneYear);
+                            setNinetyDay(snap.ninetyDay);
+                            setParkingLot(snap.parkingLot);
+                            setFocusOfYear(snap.focusOfYear);
+                            setActiveSnapIdx(idx);
+                            toast.success(isLatest ? "Back to latest version." : "Restored — click Save to persist.");
+                          }}
+                        >
+                          <RotateCcw className="w-3 h-3 mr-1" />
+                          {isLatest ? "Revert to Latest" : "Restore"}
+                        </Button>
+                      )}
                       <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs h-7"
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
                         onClick={() => {
-                          setSchoolName(snap.schoolName);
-                          setMission(snap.mission);
-                          setBhag(snap.bhag);
-                          setValuesBullets(snap.valuesBullets);
-                          setIcp(snap.icp);
-                          setThreeYear(snap.threeYear);
-                          setOneYear(snap.oneYear);
-                          setNinetyDay(snap.ninetyDay);
-                          setParkingLot(snap.parkingLot);
-                          setFocusOfYear(snap.focusOfYear);
-                          setShowHistory(false);
-                          toast.success("Restored to selected version — click Save to persist.");
+                          saveSnapshots(snapshots.filter((_, i) => i !== idx));
+                          if (activeSnapIdx >= idx) setActiveSnapIdx(Math.max(0, activeSnapIdx - 1));
                         }}
                       >
-                        <RotateCcw className="w-3 h-3 mr-1" /> Restore
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
-                    )}
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => saveSnapshots(snapshots.filter((_, i) => i !== idx))}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
+          {activeSnapIdx !== 0 && snapshots.length > 0 && (
+            <div className="pt-2 border-t text-xs text-amber-400 flex items-center gap-1.5">
+              <RotateCcw className="w-3 h-3" />
+              You are viewing an older version. Click "Save Changes" to save this as the latest, or "Revert to Latest" to go back.
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
