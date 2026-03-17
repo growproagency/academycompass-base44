@@ -160,11 +160,14 @@ export default function SignIn() {
                   type="email"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
+                  onChange={(e) => { setEmail(e.target.value); setEmailError(null); }}
+                  className={`pl-10 ${emailError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                   required
                 />
               </div>
+              {emailError && (
+                <p className="text-xs text-red-500 mt-1">{emailError}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
