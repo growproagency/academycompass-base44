@@ -63,13 +63,36 @@ export default function SignIn() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) {
-      toast.error('Please enter your email and password.');
+
+    // Client-side validation
+    const clientError = validateEmail(email);
+    if (clientError) {
+      setEmailError(clientError);
       return;
     }
+    setEmailError(null);
+
+    if (!password.trim()) {
+      toast.error('Please enter your password.');
+      return;
+    }
+
     setIsLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    // Server-side validation
+    try {
+      const { base44 } = await import('@/api/base44Client');
+      const res = await base44.functions.invoke('validateEmail', { email: email.trim() });
+      if (!res.data?.valid) {
+        setEmailError(res.data?.error || 'Invalid email address.');
+        setIsLoading(false);
+        return;
+      }
+    } catch (_) {
+      // Server validation failed silently — proceed with Supabase
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
 
     if (error) {
       toast.error(error.message);
