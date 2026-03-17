@@ -522,7 +522,7 @@ export default function StrategicOrganizer() {
                       size="icon"
                       variant="ghost"
                       className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => setSnapshots(prev => prev.filter((_, i) => i !== idx))}
+                      onClick={() => saveSnapshots(snapshots.filter((_, i) => i !== idx))}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
