@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
 
     // Fetch all non-archived tasks with a repeat_frequency set (not "none")
     const tasksRes = await fetch(
-      `${supabaseUrl}/rest/v1/tasks?repeat_frequency=neq.none&archived_at=is.null&select=*`,
+      `${supabaseUrl}/rest/v1/tasks?select=*`,
       { headers }
     );
 
