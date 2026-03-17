@@ -514,60 +514,86 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6" style={{ background: "#ffffff", fontFamily: "'Inter', sans-serif" }}>
       {/* Pinned announcement banner */}
       {announcements.length > 0 && (
-        <Card className="p-4 bg-primary/5 border-primary/20">
+        <div style={{ background: "#ffffff", border: "1px solid #E2E8F0", borderRadius: 10, padding: "14px 18px", borderLeft: "4px solid #22C55E", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
           <div className="flex items-start gap-3">
-            <Pin className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+            <Pin className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#22C55E" }} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold">{announcements[0].title}</p>
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{announcements[0].content}</p>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "#1E293B" }}>{announcements[0].title}</p>
+              {announcements[0].created_at && (
+                <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>{format(new Date(announcements[0].created_at), "MMM d, yyyy")}</p>
+              )}
             </div>
-            <Link to="/Announcements">
-              <Button variant="ghost" size="sm" className="text-xs shrink-0">
-                View all <ChevronRight className="w-3 h-3 ml-1" />
-              </Button>
+            <Link to="/Announcements" style={{ fontSize: 13, fontWeight: 600, color: "#22C55E", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 2 }}>
+              View all <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Welcome back, {authUser?.user_metadata?.full_name?.split(" ")[0] || authUser?.email?.split("@")[0] || "there"}
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1E293B" }}>Dashboard</h1>
+          <p style={{ fontSize: 13, color: "#64748B", marginTop: 2 }}>
+            Welcome back, {profile?.full_name?.split(" ")[0] || authUser?.user_metadata?.full_name?.split(" ")[0] || authUser?.email?.split("@")[0] || "there"} 👋
           </p>
         </div>
-        <Tabs value={view} onValueChange={setView}>
-          <TabsList className="bg-secondary">
-            <TabsTrigger value="todos" className="text-xs">
-              <CheckSquare className="w-3.5 h-3.5 mr-1.5" /> To-Dos
-            </TabsTrigger>
-            <TabsTrigger value="rocks" className="text-xs">
-              <Mountain className="w-3.5 h-3.5 mr-1.5" /> Rocks
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex" style={{ border: "1px solid #E2E8F0", borderRadius: 8, overflow: "hidden" }}>
+          {[
+            { value: "todos", icon: CheckSquare, label: "To-Dos" },
+            { value: "rocks", icon: Mountain, label: "Rocks" },
+          ].map(({ value, icon: Icon, label }) => (
+            <button
+              key={value}
+              onClick={() => setView(value)}
+              className="flex items-center gap-1.5"
+              style={{
+                padding: "7px 16px",
+                fontSize: 13,
+                fontWeight: 600,
+                background: view === value ? "#22C55E" : "#ffffff",
+                color: view === value ? "#ffffff" : "#64748B",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+            >
+              <Icon className="w-3.5 h-3.5" /> {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Total To-Dos" value={stats.totalTodos} icon={CheckSquare} />
-        <StatCard label="Overdue" value={stats.overdue} icon={AlertCircle} color="text-red-400" />
-        <StatCard label="Completed" value={stats.done} icon={TrendingUp} color="text-emerald-400" />
-        <StatCard label="Rocks On Track" value={`${stats.rocksOnTrack}/${stats.totalRocks}`} icon={Mountain} color="text-amber-400" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Total To-Dos", value: stats.totalTodos, icon: CheckSquare, color: "#22C55E" },
+          { label: "Overdue", value: stats.overdue, icon: AlertCircle, color: "#EF4444" },
+          { label: "Completed", value: stats.done, icon: TrendingUp, color: "#22C55E" },
+          { label: "Rocks On Track", value: `${stats.rocksOnTrack}/${stats.totalRocks}`, icon: Mountain, color: "#F59E0B" },
+        ].map(({ label, value, icon: Icon, color }) => (
+          <div key={label} style={{ background: "#ffffff", border: "1px solid #E2E8F0", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p style={{ fontSize: 32, fontWeight: 700, color: "#1E293B", lineHeight: 1 }}>{value}</p>
+                <p style={{ fontSize: 12, color: "#64748B", marginTop: 4 }}>{label}</p>
+              </div>
+              <Icon className="w-6 h-6" style={{ color }} />
+            </div>
+          </div>
+        ))}
       </div>
 
       {view === "todos" ? (
         <>
           {/* Filters */}
           <div className="flex items-center gap-3">
-            <Filter className="w-4 h-4 text-muted-foreground" />
+            <Filter className="w-4 h-4" style={{ color: "#64748B" }} />
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[180px] h-8 text-xs">
+              <SelectTrigger className="w-[160px] h-8 text-xs" style={{ border: "1px solid #E2E8F0", borderRadius: 8 }}>
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
@@ -577,13 +603,15 @@ export default function Dashboard() {
                 <SelectItem value="done">Done</SelectItem>
               </SelectContent>
             </Select>
-            <Button
-              size="sm"
-              className="ml-auto h-8 text-xs"
+            <button
+              className="ml-auto flex items-center gap-1.5 transition-colors"
+              style={{ background: "#22C55E", color: "#fff", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#16A34A"}
+              onMouseLeave={e => e.currentTarget.style.background = "#22C55E"}
               onClick={() => { setEditingTask(null); setCreateStatus("todo"); setCreateOpen(true); }}
             >
-              <Plus className="w-3.5 h-3.5 mr-1" /> New To-Do
-            </Button>
+              <Plus className="w-3.5 h-3.5" /> New To-Do
+            </button>
           </div>
 
           {/* Kanban Board */}
@@ -603,57 +631,60 @@ export default function Dashboard() {
         </>
       ) : (
         /* Rocks View */
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {rocks.map((rock) => {
             const rockTasks = tasks.filter((t) => t.rock_id === rock.id);
             const doneTasks = rockTasks.filter((t) => t.status === "done").length;
             const progress = rockTasks.length > 0 ? Math.round((doneTasks / rockTasks.length) * 100) : 0;
             const statusConfig = {
-              on_track: { label: "On Track", className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-              off_track: { label: "Off Track", className: "bg-red-500/10 text-red-400 border-red-500/20" },
-              assist: { label: "Assist", className: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-              complete: { label: "Complete", className: "bg-primary/10 text-primary border-primary/20" },
+              on_track: { label: "On Track", bg: "#DCFCE7", color: "#16A34A" },
+              off_track: { label: "Off Track", bg: "#FEE2E2", color: "#DC2626" },
+              assist: { label: "Assist", bg: "#FEF3C7", color: "#D97706" },
+              complete: { label: "Complete", bg: "#DCFCE7", color: "#16A34A" },
             };
             const sc = statusConfig[rock.rock_status] || statusConfig.on_track;
 
             return (
               <Link key={rock.id} to={`/RockDetail?id=${rock.id}`}>
-                <Card className="p-4 hover:border-border/80 transition-all cursor-pointer group">
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{rock.name}</h3>
-                    <Badge variant="outline" className={`text-[10px] ${sc.className}`}>{sc.label}</Badge>
+                <div
+                  className="group transition-all cursor-pointer"
+                  style={{ background: "#ffffff", border: "1px solid #E2E8F0", borderRadius: 12, padding: 18, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+                  onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.10)"}
+                  onMouseLeave={e => e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)"}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1E293B" }} className="group-hover:text-green-600 transition-colors">{rock.name}</h3>
+                    <span style={{ fontSize: 11, fontWeight: 600, background: sc.bg, color: sc.color, borderRadius: 6, padding: "2px 8px" }}>{sc.label}</span>
                   </div>
-                  {rock.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{rock.description}</p>
-                  )}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  {rock.description && <p className="text-xs line-clamp-2 mb-3" style={{ color: "#64748B" }}>{rock.description}</p>}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between" style={{ fontSize: 12, color: "#64748B" }}>
                       <span>To-Dos: {doneTasks}/{rockTasks.length}</span>
                       <span>{progress}%</span>
                     </div>
-                    <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                      <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+                    <div style={{ background: "#E2E8F0", borderRadius: 3, height: 6, overflow: "hidden" }}>
+                      <div style={{ background: "#22C55E", width: `${progress}%`, height: "100%", borderRadius: 3 }} />
                     </div>
                   </div>
                   {rock.due_date && (
-                    <p className={`text-[10px] mt-2 ${isPast(parseISO(rock.due_date)) ? "text-red-400" : "text-muted-foreground"}`}>
+                    <p style={{ fontSize: 11, marginTop: 8, color: isPast(parseISO(rock.due_date)) ? "#EF4444" : "#64748B" }}>
                       Due {format(parseISO(rock.due_date), "MMM d, yyyy")}
                     </p>
                   )}
-                </Card>
+                </div>
               </Link>
             );
           })}
           {rocks.length === 0 && (
-            <Card className="p-8 col-span-full flex flex-col items-center text-center">
-              <Mountain className="w-8 h-8 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground">No Rocks yet</p>
+            <div className="p-8 col-span-full flex flex-col items-center text-center" style={{ border: "1px solid #E2E8F0", borderRadius: 12, background: "#F8FAFC" }}>
+              <Mountain className="w-8 h-8 mb-2" style={{ color: "#CBD5E1" }} />
+              <p style={{ fontSize: 14, color: "#64748B" }}>No Rocks yet</p>
               <Link to="/Rocks">
-                <Button size="sm" className="mt-3 text-xs">
-                  <Plus className="w-3 h-3 mr-1" /> Create Rock
-                </Button>
+                <button className="mt-3 flex items-center gap-1.5" style={{ background: "#22C55E", color: "#fff", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}>
+                  <Plus className="w-3.5 h-3.5" /> Create Rock
+                </button>
               </Link>
-            </Card>
+            </div>
           )}
         </div>
       )}
