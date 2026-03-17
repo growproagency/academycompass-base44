@@ -257,7 +257,19 @@ export default function StrategicOrganizer() {
       if (data) setPlanId(data.id);
     }
 
-    setSaveCount(c => c + 1);
+    // Save snapshot of current state
+    setSnapshots(prev => [
+      {
+        savedAt: new Date().toISOString(),
+        schoolName, mission, bhag,
+        valuesBullets: [...valuesBullets],
+        icp, threeYear: { ...threeYear }, oneYear: { ...oneYear },
+        ninetyDay: { ...ninetyDay },
+        parkingLot: [...parkingLot],
+        focusOfYear,
+      },
+      ...prev,
+    ]);
     toast.success("Saved");
     setSaving(false);
   };
