@@ -440,7 +440,9 @@ export default function StrategicOrganizer() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Version History</DialogTitle>
-            <p className="text-xs text-muted-foreground mt-1">Computer-tracked history of plan changes</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Computer-tracked history of plan changes{saveCount > 0 ? ` · ${saveCount} revision${saveCount !== 1 ? "s" : ""} this session` : ""}
+            </p>
           </DialogHeader>
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {plans.length > 0 && plans[0].updated_at ? (
