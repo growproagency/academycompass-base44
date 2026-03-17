@@ -79,7 +79,7 @@ export default function SignIn() {
         <img
           src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/8eb22fe87_GrowProAgencyLogo_Darkcopy.png"
           alt="Grow Pro Agency"
-          style={{ width: 160, height: "auto", display: "block", margin: "32px auto 24px" }}
+          style={{ width: 200, height: "auto", display: "block", margin: "32px auto 24px", overflow: "visible", flexShrink: 0 }}
         />
 
         {/* Title */}
