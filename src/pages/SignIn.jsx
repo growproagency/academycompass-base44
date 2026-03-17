@@ -71,7 +71,7 @@ export default function SignIn() {
           background: "#141414",
           borderRadius: 16,
           boxShadow: "0 4px 32px rgba(0,0,0,0.5)",
-          padding: "40px 40px 32px",
+          padding: "32px 40px 32px",
           border: "1px solid #2a2a2a",
         }}
       >
