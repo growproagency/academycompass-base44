@@ -8,6 +8,13 @@ import { GraduationCap, Mail, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+const validatePassword = (value) => {
+  if (!value) return 'Password is required.';
+  if (value.length < 8) return 'Password must be at least 8 characters.';
+  if (/<[^>]*>|<\/[^>]*>/i.test(value)) return 'Password contains invalid characters.';
+  return null;
+};
+
 const validateEmail = (value) => {
   const trimmed = value.trim();
   if (!trimmed) return 'Email is required.';
@@ -21,6 +28,7 @@ export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState(null);
+  const [passwordError, setPasswordError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const navigate = useNavigate();
