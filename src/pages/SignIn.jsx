@@ -76,13 +76,11 @@ export default function SignIn() {
         }}
       >
         {/* Logo */}
-        <div className="flex items-center justify-center mb-6">
-          <img
-            src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/8eb22fe87_GrowProAgencyLogo_Darkcopy.png"
-            alt="Grow Pro Agency"
-            style={{ height: 56, objectFit: "contain" }}
-          />
-        </div>
+        <img
+          src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/8eb22fe87_GrowProAgencyLogo_Darkcopy.png"
+          alt="Grow Pro Agency"
+          style={{ width: 160, height: "auto", display: "block", margin: "32px auto 24px" }}
+        />
 
         {/* Title */}
         <h1 style={{ fontSize: 28, fontWeight: 700, color: "#ffffff", marginBottom: 6, textAlign: "center" }}>
