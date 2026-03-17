@@ -214,7 +214,7 @@ export default function StrategicOrganizer() {
   });
 
   useEffect(() => {
-    if (plans.length > 0) {
+    if (plans.length > 0 && !initialized) {
       const p = plans[0];
       setPlanId(p.id);
       setSchoolName(p.school_name || "");
@@ -227,8 +227,9 @@ export default function StrategicOrganizer() {
       setNinetyDay(parseJSON(p.ninety_day_project, {}));
       setParkingLot(parseJSON(p.parking_lot, [""]));
       setFocusOfYear(p.focus_of_the_year || "");
+      setInitialized(true);
     }
-  }, [plans]);
+  }, [plans, initialized]);
 
   const handleSave = async () => {
     setSaving(true);
