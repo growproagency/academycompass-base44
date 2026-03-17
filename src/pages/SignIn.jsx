@@ -80,10 +80,12 @@ export default function SignIn() {
     }
     setEmailError(null);
 
-    if (!password.trim()) {
-      toast.error('Please enter your password.');
+    const pwError = validatePassword(password);
+    if (pwError) {
+      setPasswordError(pwError);
       return;
     }
+    setPasswordError(null);
 
     setIsLoading(true);
 
@@ -186,11 +188,14 @@ export default function SignIn() {
                   type="password"
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  onChange={(e) => { setPassword(e.target.value); setPasswordError(null); }}
+                  className={`pl-10 ${passwordError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                   required
                 />
               </div>
+              {passwordError && (
+                <p className="text-xs text-red-500 mt-1">{passwordError}</p>
+              )}
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Signing in...' : 'Sign In'}
