@@ -61,34 +61,34 @@ export default function SignIn() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-4"
-      style={{ background: "#ffffff", fontFamily: "'Inter', system-ui, sans-serif" }}
+      style={{ background: "#000000", fontFamily: "'Inter', system-ui, sans-serif" }}
     >
       {/* Card */}
       <div
         className="w-full flex flex-col items-center"
         style={{
           maxWidth: 420,
-          background: "#ffffff",
+          background: "#141414",
           borderRadius: 16,
-          boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+          boxShadow: "0 4px 32px rgba(0,0,0,0.5)",
           padding: "40px 40px 32px",
-          border: "1px solid #E2E8F0",
+          border: "1px solid #2a2a2a",
         }}
       >
         {/* Logo */}
-        <div className="flex items-center justify-center mb-6" style={{ background: "#111111", borderRadius: 10, padding: "10px 20px" }}>
+        <div className="flex items-center justify-center mb-6">
           <img
-            src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/50a004ff4_image.png"
+            src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/8eb22fe87_GrowProAgencyLogo_Darkcopy.png"
             alt="Grow Pro Agency"
-            style={{ height: 44, objectFit: "contain" }}
+            style={{ height: 56, objectFit: "contain" }}
           />
         </div>
 
         {/* Title */}
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1E293B", marginBottom: 6, textAlign: "center" }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#ffffff", marginBottom: 6, textAlign: "center" }}>
           Welcome Back
         </h1>
-        <p style={{ fontSize: 14, color: "#64748B", marginBottom: 28, textAlign: "center" }}>
+        <p style={{ fontSize: 14, color: "#94A3B8", marginBottom: 28, textAlign: "center" }}>
           Sign in to Academy Compass
         </p>
 
@@ -96,7 +96,7 @@ export default function SignIn() {
         {message && (
           <div
             className="w-full mb-4 p-3 rounded-lg text-sm"
-            style={{ background: "#EFF6FF", color: "#2563EB", border: "1px solid #BFDBFE" }}
+            style={{ background: "#1e3a5f", color: "#93C5FD", border: "1px solid #1d4ed8" }}
           >
             {message}
           </div>
@@ -110,16 +110,16 @@ export default function SignIn() {
           style={{
             height: 44,
             borderRadius: 10,
-            border: "1px solid #E2E8F0",
-            background: "#ffffff",
+            border: "1px solid #333333",
+            background: "#1f1f1f",
             cursor: isLoading ? "not-allowed" : "pointer",
             fontSize: 14,
             fontWeight: 600,
-            color: "#1E293B",
+            color: "#ffffff",
             opacity: isLoading ? 0.6 : 1,
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = "#22C55E"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(34,197,94,0.12)"; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.boxShadow = "none"; }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = "#22C55E"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(34,197,94,0.15)"; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "#333333"; e.currentTarget.style.boxShadow = "none"; }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -132,7 +132,7 @@ export default function SignIn() {
       </div>
 
       {/* Footer */}
-      <p className="mt-6 text-xs" style={{ color: "#94A3B8" }}>
+      <p className="mt-6 text-xs" style={{ color: "#4B5563" }}>
         Powered by Grow Pro Agency
       </p>
     </div>
