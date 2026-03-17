@@ -433,12 +433,7 @@ export default function StrategicOrganizer() {
       <Dialog open={showHistory} onOpenChange={setShowHistory}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              Version History
-              <Button variant="ghost" size="icon" onClick={() => setShowHistory(false)} className="h-6 w-6">
-                <X className="w-4 h-4" />
-              </Button>
-            </DialogTitle>
+            <DialogTitle>Version History</DialogTitle>
             <p className="text-xs text-muted-foreground mt-1">Computer-tracked history of plan changes</p>
           </DialogHeader>
           <div className="space-y-3 max-h-96 overflow-y-auto">
