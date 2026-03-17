@@ -293,8 +293,8 @@ export default function StrategicOrganizer() {
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={() => setShowHistory(true)} className="gap-1.5 text-xs relative">
             <History className="w-3.5 h-3.5" /> History
-            {saveCount > 0 && (
-              <span className="ml-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full px-1.5 py-0.5 leading-none">{saveCount}</span>
+            {snapshots.length > 0 && (
+              <span className="ml-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full px-1.5 py-0.5 leading-none">{snapshots.length}</span>
             )}
           </Button>
           <Button variant="outline" size="sm" onClick={() => navigate("/StrategicOrganizerPreview")} className="gap-1.5 text-xs">
