@@ -198,62 +198,6 @@ export default function SignIn() {
               {message.text}
             </div>
           )}
-          {rateLimitError && (
-            <div className="p-3 rounded-lg text-sm bg-red-500/10 text-red-600 border border-red-500/20">
-              {rateLimitError}
-            </div>
-          )}
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setEmailError(null); }}
-                  className={`pl-10 ${emailError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                  required
-                />
-              </div>
-              {emailError && (
-                <p className="text-xs text-red-500 mt-1">{emailError}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setPasswordError(null); }}
-                  className={`pl-10 ${passwordError ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                  required
-                />
-              </div>
-              {passwordError && (
-                <p className="text-xs text-red-500 mt-1">{passwordError}</p>
-              )}
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-            </div>
-          </div>
-
           <Button
             type="button"
             variant="outline"
