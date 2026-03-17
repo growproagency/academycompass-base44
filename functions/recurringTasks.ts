@@ -100,7 +100,6 @@ Deno.serve(async (req) => {
         priority: task.priority || 'medium',
         due_date: nextDueStr,
         assigned_to: task.assigned_to || null,
-        rock_id: task.rock_id || null,
         organization_id: task.organization_id,
         created_by: task.created_by || null,
         [repeatCol]: freq,
