@@ -74,21 +74,21 @@ export default function Layout() {
 
     return (
       <Link
-        to={item.path}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 relative ${
-          isActive
-            ? "text-white"
-            : "text-[#CBD5E1] hover:text-white hover:bg-white/[0.06]"
-        }`}
-        style={isActive ? { background: "rgba(34,197,94,0.15)" } : {}}
+      to={item.path}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 relative ${
+        isActive
+          ? "text-white"
+          : "text-[#CBD5E1] hover:text-white hover:bg-white/[0.06]"
+      }`}
+      style={isActive ? { background: "rgba(42,172,226,0.15)" } : {}}
       >
-        {isActive && (
-          <span
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full"
-            style={{ background: "#22C55E" }}
-          />
-        )}
-        <item.icon className="w-4 h-4 shrink-0" style={isActive ? { color: "#22C55E" } : {}} />
+      {isActive && (
+        <span
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full"
+          style={{ background: "#2AACE2" }}
+        />
+      )}
+      <item.icon className="w-4 h-4 shrink-0" style={isActive ? { color: "#2AACE2" } : {}} />
         <span className="flex-1">{item.label}</span>
         {showBadge && (
           <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500 text-white min-w-[18px] text-center">
@@ -123,17 +123,20 @@ export default function Layout() {
         {/* Logo */}
         <div className="flex flex-col px-5 pt-6 pb-4 shrink-0">
           <div className="flex items-center gap-3 mb-1">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: "#22C55E" }}
-            >
-              <GraduationCap className="w-5 h-5 text-white" />
-            </div>
+            <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="5" y="45" width="14" height="55" rx="3" fill="#2AACE2"/>
+              <rect x="23" y="25" width="14" height="75" rx="3" fill="#2AACE2"/>
+              <rect x="41" y="55" width="14" height="45" rx="3" fill="#2AACE2"/>
+              <rect x="59" y="35" width="14" height="65" rx="3" fill="#2AACE2"/>
+              <rect x="77" y="65" width="14" height="35" rx="3" fill="#2AACE2"/>
+              <polyline points="5,85 35,45 65,60 95,20" stroke="white" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+              <polygon points="95,20 80,22 88,34" fill="white"/>
+            </svg>
             <span className="font-bold text-white text-[15px] tracking-tight leading-tight">
               Academy Compass
             </span>
           </div>
-          <p className="text-[10px] font-medium pl-12" style={{ color: "#4ADE80" }}>
+          <p className="text-[10px] font-medium pl-12" style={{ color: "#2AACE2" }}>
             Powered by Grow Pro
           </p>
         </div>
@@ -166,7 +169,7 @@ export default function Layout() {
           <div className="flex items-center gap-3 px-2">
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold text-white"
-              style={{ background: "#22C55E" }}
+              style={{ background: "#2AACE2" }}
             >
               {initials}
             </div>
