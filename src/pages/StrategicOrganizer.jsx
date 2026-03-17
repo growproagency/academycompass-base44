@@ -149,8 +149,19 @@ export default function StrategicOrganizer() {
   const [planId, setPlanId] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [initialized, setInitialized] = useState(false);
-  // snapshots: array of { savedAt, schoolName, mission, bhag, valuesBullets, icp, threeYear, oneYear, ninetyDay, parkingLot, focusOfYear }
-  const [snapshots, setSnapshots] = useState([]);
+
+  const SNAPSHOTS_KEY = `strategic_snapshots_${profile?.organization_id}`;
+  const [snapshots, setSnapshots] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`strategic_snapshots_${profile?.organization_id}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+
+  const saveSnapshots = (newSnapshots) => {
+    setSnapshots(newSnapshots);
+    try { localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(newSnapshots)); } catch {}
+  };
 
   const [schoolName, setSchoolName] = useState("");
   const [mission, setMission] = useState("");
