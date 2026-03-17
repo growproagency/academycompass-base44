@@ -72,6 +72,7 @@ export default function SignIn() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setRateLimitError(null);
 
     // Client-side validation
     const clientError = validateEmail(email);
@@ -90,9 +91,22 @@ export default function SignIn() {
 
     setIsLoading(true);
 
-    // Server-side validation
+    const { base44 } = await import('@/api/base44Client');
+
+    // Check rate limit before attempting login
     try {
-      const { base44 } = await import('@/api/base44Client');
+      const checkRes = await base44.functions.invoke('trackLoginAttempt', { action: 'check', email: email.trim() });
+      if (checkRes.data?.allowed === false) {
+        setRateLimitError(checkRes.data.message || 'Too many attempts, please try again later.');
+        setIsLoading(false);
+        return;
+      }
+    } catch (_) {
+      // Rate limit check failed silently — proceed
+    }
+
+    // Server-side field validation
+    try {
       const [emailRes, pwRes] = await Promise.all([
         base44.functions.invoke('validateEmail', { email: email.trim() }),
         base44.functions.invoke('validatePassword', { password }),
@@ -114,9 +128,24 @@ export default function SignIn() {
     const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
 
     if (error) {
-      toast.error(error.message);
+      // Record failed attempt
+      try {
+        const failRes = await base44.functions.invoke('trackLoginAttempt', { action: 'failed', email: email.trim() });
+        if (failRes.data?.locked) {
+          setRateLimitError(failRes.data.message || 'Too many attempts, please try again later.');
+          setIsLoading(false);
+          return;
+        }
+      } catch (_) { /* silent */ }
+
+      toast.error('Invalid email or password.');
       setIsLoading(false);
     } else {
+      // Clear attempts on success
+      try {
+        await base44.functions.invoke('trackLoginAttempt', { action: 'success', email: email.trim() });
+      } catch (_) { /* silent */ }
+
       toast.success('Login successful!');
       await checkProfileAndRedirect(data.user.id);
       setIsLoading(false);
