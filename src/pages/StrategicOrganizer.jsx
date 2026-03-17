@@ -269,18 +269,18 @@ export default function StrategicOrganizer() {
     }
 
     // Save snapshot of current state
-    setSnapshots(prev => [
-      {
-        savedAt: new Date().toISOString(),
-        schoolName, mission, bhag,
-        valuesBullets: [...valuesBullets],
-        icp, threeYear: { ...threeYear }, oneYear: { ...oneYear },
-        ninetyDay: { ...ninetyDay },
-        parkingLot: [...parkingLot],
-        focusOfYear,
-      },
-      ...prev,
-    ]);
+    const newSnap = {
+      savedAt: new Date().toISOString(),
+      schoolName, mission, bhag,
+      valuesBullets: [...valuesBullets],
+      icp,
+      threeYear: { ...threeYear },
+      oneYear: { ...oneYear },
+      ninetyDay: { ...ninetyDay },
+      parkingLot: [...parkingLot],
+      focusOfYear,
+    };
+    saveSnapshots([newSnap, ...snapshots]);
     toast.success("Saved");
     setSaving(false);
   };
