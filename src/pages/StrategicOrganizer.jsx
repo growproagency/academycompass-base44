@@ -149,6 +149,7 @@ export default function StrategicOrganizer() {
   const [planId, setPlanId] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [activeSnapIdx, setActiveSnapIdx] = useState(0); // 0 = latest/current
 
   const SNAPSHOTS_KEY = `strategic_snapshots_${profile?.organization_id}`;
   const [snapshots, setSnapshots] = useState(() => {
