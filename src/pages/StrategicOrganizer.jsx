@@ -454,70 +454,70 @@ export default function StrategicOrganizer() {
           <DialogHeader>
             <DialogTitle>Version History</DialogTitle>
             <p className="text-xs text-muted-foreground mt-1">
-              Computer-tracked history of plan changes{saveCount > 0 ? ` · ${saveCount} revision${saveCount !== 1 ? "s" : ""} this session` : ""}
+              A snapshot is saved each time you click Save Changes.{snapshots.length > 0 ? ` ${snapshots.length} snapshot${snapshots.length !== 1 ? "s" : ""} this session.` : ""}
             </p>
           </DialogHeader>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {plans.length > 0 && plans[0].updated_at ? (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-accent/30 border border-accent/50">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary text-primary-foreground">Latest</span>
+          <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+            {snapshots.length === 0 ? (
+              <div className="text-sm text-muted-foreground p-6 text-center">
+                No snapshots yet. Save your plan to create the first version.
+              </div>
+            ) : (
+              snapshots.map((snap, idx) => (
+                <div
+                  key={idx}
+                  className={`flex items-center justify-between gap-3 p-3 rounded-lg border ${idx === 0 ? "bg-primary/10 border-primary/30" : "bg-secondary/20 border-secondary/40"}`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      {idx === 0 && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary text-primary-foreground shrink-0">Latest</span>
+                      )}
                       <span className="text-xs text-muted-foreground">
-                        {new Date(plans[0].updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(plans[0].updated_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(snap.savedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {" at "}
+                        {new Date(snap.savedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                       </span>
                     </div>
+                    {snap.schoolName && (
+                      <p className="text-xs font-medium mt-0.5 truncate">{snap.schoolName}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <Button size="sm" variant="default" className="text-xs h-7 bg-emerald-600 hover:bg-emerald-700" disabled>
-                      <RotateCcw className="w-3 h-3 mr-1" /> Restore
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={async () => {
-                      if (!plans[0]?.id) return;
-                      const { error } = await supabase.from("strategic_plans").delete().eq("id", plans[0].id);
-                      if (error) { toast.error(error.message); return; }
-                      setPlanId(null);
-                      setSchoolName(""); setMission(""); setBhag(""); setValuesBullets([""]); setIcp("");
-                      setThreeYear({}); setOneYear({}); setNinetyDay({}); setParkingLot([""]); setFocusOfYear("");
-                      queryClient.invalidateQueries({ queryKey: ["strategic-plans"] });
-                      setShowHistory(false);
-                      toast.success("Plan deleted");
-                    }}>
+                    {idx !== 0 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-7"
+                        onClick={() => {
+                          setSchoolName(snap.schoolName);
+                          setMission(snap.mission);
+                          setBhag(snap.bhag);
+                          setValuesBullets(snap.valuesBullets);
+                          setIcp(snap.icp);
+                          setThreeYear(snap.threeYear);
+                          setOneYear(snap.oneYear);
+                          setNinetyDay(snap.ninetyDay);
+                          setParkingLot(snap.parkingLot);
+                          setFocusOfYear(snap.focusOfYear);
+                          setShowHistory(false);
+                          toast.success("Restored to selected version — click Save to persist.");
+                        }}
+                      >
+                        <RotateCcw className="w-3 h-3 mr-1" /> Restore
+                      </Button>
+                    )}
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => setSnapshots(prev => prev.filter((_, i) => i !== idx))}
+                    >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </div>
-                {plans[0].created_at && plans[0].created_at !== plans[0].updated_at && (
-                  <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-secondary/30 border border-secondary/50">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold">Snapshot</span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(plans[0].created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(plans[0].created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => {
-                        toast.success("Restored to this version");
-                        setShowHistory(false);
-                      }}>
-                        <RotateCcw className="w-3 h-3 mr-1" /> Restore
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => {
-                        toast.success("Version deleted");
-                      }}>
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground p-4 text-center">
-                A snapshot is saved each time you click Save Changes.
-              </div>
+              ))
             )}
           </div>
         </DialogContent>
