@@ -1,83 +1,89 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
-
 Deno.serve(async (req) => {
   try {
-    const base44 = createClientFromRequest(req);
-    const today = new Date();
-    // Today's date string in YYYY-MM-DD (UTC)
-    const todayStr = today.toISOString().split('T')[0];
-
-    // Use service role to access all orgs
     const supabaseUrl = Deno.env.get('VITE_SUPABASE_URL');
     const supabaseKey = Deno.env.get('VITE_SUPABASE_ANON_KEY');
 
-    // Fetch all tasks with a repeat value that is not "none" and not archived
+    const headers = {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+      'Content-Type': 'application/json',
+    };
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    console.log(`[RecurringTasks] Running for today: ${todayStr}`);
+
+    // Fetch all non-archived tasks with a repeat_frequency set (not "none")
     const tasksRes = await fetch(
-      `${supabaseUrl}/rest/v1/tasks?repeat=neq.none&archived_at=is.null&select=*`,
-      {
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json',
-        },
-      }
+      `${supabaseUrl}/rest/v1/tasks?repeat_frequency=neq.none&archived_at=is.null&select=*`,
+      { headers }
     );
 
     if (!tasksRes.ok) {
       const err = await tasksRes.text();
+      console.error(`Failed to fetch tasks: ${err}`);
       return Response.json({ error: `Failed to fetch tasks: ${err}` }, { status: 500 });
     }
 
     const tasks = await tasksRes.json();
-    console.log(`Found ${tasks.length} recurring tasks`);
+    console.log(`[RecurringTasks] Found ${tasks.length} recurring task(s)`);
 
     const results = [];
 
     for (const task of tasks) {
-      const dueDate = task.due_date ? new Date(task.due_date) : null;
-      if (!dueDate) continue;
+      if (!task.due_date) {
+        console.log(`[RecurringTasks] Task "${task.title}" has no due_date, skipping`);
+        continue;
+      }
 
-      // Calculate the next due date based on repeat frequency
+      const dueDate = new Date(task.due_date + 'T00:00:00Z');
+      const today = new Date(todayStr + 'T00:00:00Z');
+
+      // Only process tasks whose due_date is today or in the past (they need a next occurrence)
+      if (dueDate > today) {
+        console.log(`[RecurringTasks] Task "${task.title}" due ${task.due_date} is in the future, skipping`);
+        continue;
+      }
+
+      // Calculate next due date based on repeat_frequency
       const nextDue = new Date(dueDate);
-      const repeat = task.repeat;
+      const freq = task.repeat_frequency;
 
-      if (repeat === 'daily') {
-        nextDue.setDate(nextDue.getDate() + 1);
-      } else if (repeat === 'weekly') {
-        nextDue.setDate(nextDue.getDate() + 7);
-      } else if (repeat === 'bi-weekly') {
-        nextDue.setDate(nextDue.getDate() + 14);
-      } else if (repeat === 'monthly') {
-        nextDue.setMonth(nextDue.getMonth() + 1);
+      if (freq === 'daily') {
+        // Advance from due_date by 1-day increments until we reach today or beyond
+        while (nextDue <= today) {
+          nextDue.setDate(nextDue.getDate() + 1);
+        }
+      } else if (freq === 'weekly') {
+        while (nextDue <= today) {
+          nextDue.setDate(nextDue.getDate() + 7);
+        }
+      } else if (freq === 'bi-weekly') {
+        while (nextDue <= today) {
+          nextDue.setDate(nextDue.getDate() + 14);
+        }
+      } else if (freq === 'monthly') {
+        while (nextDue <= today) {
+          nextDue.setMonth(nextDue.getMonth() + 1);
+        }
       } else {
         continue;
       }
 
       const nextDueStr = nextDue.toISOString().split('T')[0];
+      console.log(`[RecurringTasks] Task "${task.title}" (${task.id}): next occurrence → ${nextDueStr}`);
 
-      // Only create if the next due date is today (we run at 8am EST = day of next due)
-      if (nextDueStr !== todayStr) {
-        console.log(`Task ${task.id} next due ${nextDueStr} != today ${todayStr}, skipping`);
-        continue;
-      }
-
-      // Check if a task with the same title, org, and due_date already exists today (avoid duplicates)
-      const dupCheckRes = await fetch(
+      // Duplicate check: skip if a task with same title, org, and next due date already exists
+      const dupRes = await fetch(
         `${supabaseUrl}/rest/v1/tasks?title=eq.${encodeURIComponent(task.title)}&organization_id=eq.${task.organization_id}&due_date=eq.${nextDueStr}&archived_at=is.null&select=id`,
-        {
-          headers: {
-            apikey: supabaseKey,
-            Authorization: `Bearer ${supabaseKey}`,
-          },
-        }
+        { headers }
       );
-      const dups = await dupCheckRes.json();
-      if (dups.length > 0) {
-        console.log(`Duplicate found for task "${task.title}" on ${nextDueStr}, skipping`);
+      const dups = await dupRes.json();
+      if (Array.isArray(dups) && dups.length > 0) {
+        console.log(`[RecurringTasks] Duplicate already exists for "${task.title}" on ${nextDueStr}, skipping`);
         continue;
       }
 
-      // Create the new task with same details but updated due_date, reset status to "todo"
+      // Create the new task — same details, new due_date, reset to "todo"
       const newTask = {
         title: task.title,
         description: task.description || null,
@@ -86,30 +92,26 @@ Deno.serve(async (req) => {
         priority: task.priority || 'medium',
         due_date: nextDueStr,
         assigned_to: task.assigned_to || null,
+        assignee_email: task.assignee_email || null,
         rock_id: task.rock_id || null,
         organization_id: task.organization_id,
         created_by: task.created_by || null,
-        repeat: task.repeat,
+        repeat_frequency: task.repeat_frequency,
       };
 
       const createRes = await fetch(`${supabaseUrl}/rest/v1/tasks`, {
         method: 'POST',
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json',
-          Prefer: 'return=representation',
-        },
+        headers: { ...headers, Prefer: 'return=representation' },
         body: JSON.stringify(newTask),
       });
 
       if (!createRes.ok) {
         const err = await createRes.text();
-        console.error(`Failed to create recurring task for ${task.id}: ${err}`);
+        console.error(`[RecurringTasks] Failed to create task for "${task.title}": ${err}`);
         results.push({ original_id: task.id, status: 'error', error: err });
       } else {
         const created = await createRes.json();
-        console.log(`Created recurring task: ${created[0]?.id} from original: ${task.id}`);
+        console.log(`[RecurringTasks] Created new task ${created[0]?.id} from original ${task.id} (due: ${nextDueStr})`);
         results.push({ original_id: task.id, new_id: created[0]?.id, status: 'created', due_date: nextDueStr });
       }
     }
@@ -121,7 +123,7 @@ Deno.serve(async (req) => {
       results,
     });
   } catch (error) {
-    console.error('recurringTasks error:', error);
+    console.error('[RecurringTasks] Unexpected error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
