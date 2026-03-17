@@ -76,11 +76,11 @@ export default function SignIn() {
         }}
       >
         {/* Logo */}
-        <div className="flex items-center justify-center mb-6">
+        <div className="flex items-center justify-center mb-6" style={{ background: "#111111", borderRadius: 10, padding: "10px 20px" }}>
           <img
-            src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/7e307bbfa_GrowProAgencyLogo_Darkcopy.png"
+            src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/50a004ff4_image.png"
             alt="Grow Pro Agency"
-            style={{ height: 48, objectFit: "contain" }}
+            style={{ height: 44, objectFit: "contain" }}
           />
         </div>
 
