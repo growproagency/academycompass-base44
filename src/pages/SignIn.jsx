@@ -8,9 +8,19 @@ import { GraduationCap, Mail, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+const validateEmail = (value) => {
+  const trimmed = value.trim();
+  if (!trimmed) return 'Email is required.';
+  if (!trimmed.includes('@')) return 'Email must contain @.';
+  const parts = trimmed.split('@');
+  if (parts.length !== 2 || !parts[1].includes('.') || parts[1].endsWith('.')) return 'Email must have a valid domain (e.g. .com).';
+  return null;
+};
+
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const navigate = useNavigate();
