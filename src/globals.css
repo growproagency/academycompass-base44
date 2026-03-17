@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,115 +7,49 @@
 @layer base {
   :root {
     --radius: 0.5rem;
-    /* Backgrounds — clean white / very light slate */
-    --background: 0 0% 98%;
-    --foreground: 255 18% 15%;
-    
-    /* Cards */
-    --card: 0 0% 100%;
-    --card-foreground: 255 18% 15%;
-    
-    /* Popovers */
-    --popover: 0 0% 100%;
-    --popover-foreground: 255 18% 15%;
-    
-    /* Primary — electric indigo */
-    --primary: 270 100% 60%;
-    --primary-foreground: 0 0% 100%;
-    
-    /* Secondary — light slate */
-    --secondary: 250 6% 94%;
-    --secondary-foreground: 255 18% 25%;
-    
-    /* Muted */
-    --muted: 250 5% 95%;
-    --muted-foreground: 255 14% 50%;
-    
-    /* Accent — emerald */
-    --accent: 160 84% 39%;
-    --accent-foreground: 0 0% 100%;
-    
-    /* Destructive */
-    --destructive: 25 95% 53%;
-    --destructive-foreground: 0 0% 100%;
-    
-    /* Borders & inputs */
-    --border: 250 8% 88%;
-    --input: 250 6% 92%;
-    --ring: 270 100% 60%;
-    
-    /* Charts */
-    --chart-1: 270 100% 60%;
-    --chart-2: 160 84% 39%;
-    --chart-3: 55 91% 65%;
-    --chart-4: 240 100% 60%;
-    --chart-5: 25 95% 53%;
-    
-    /* Sidebar — slightly darker white/slate */
-    --sidebar-background: 250 5% 97%;
-    --sidebar-foreground: 255 18% 20%;
-    --sidebar-primary: 270 100% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 250 8% 93%;
-    --sidebar-accent-foreground: 255 18% 25%;
-    --sidebar-border: 250 8% 88%;
-    --sidebar-ring: 270 100% 60%;
-  }
 
-  .dark {
-    /* Backgrounds — deep navy/slate */
-    --background: 255 18% 13%;
-    --foreground: 250 8% 93%;
-    
-    /* Cards */
-    --card: 255 18% 17%;
-    --card-foreground: 250 8% 93%;
-    
-    /* Popovers */
-    --popover: 255 18% 17%;
-    --popover-foreground: 250 8% 93%;
-    
-    /* Primary — electric indigo (slightly lighter for dark bg) */
-    --primary: 270 100% 65%;
-    --primary-foreground: 0 0% 100%;
-    
-    /* Secondary */
-    --secondary: 255 18% 22%;
-    --secondary-foreground: 250 10% 85%;
-    
-    /* Muted */
-    --muted: 255 16% 20%;
-    --muted-foreground: 255 14% 58%;
-    
-    /* Accent — emerald */
-    --accent: 160 84% 45%;
-    --accent-foreground: 0 0% 100%;
-    
-    /* Destructive */
-    --destructive: 25 95% 58%;
-    --destructive-foreground: 0 0% 100%;
-    
-    /* Borders & inputs */
-    --border: 255 18% 26%;
-    --input: 255 18% 22%;
-    --ring: 270 100% 65%;
-    
-    /* Charts */
-    --chart-1: 270 100% 65%;
-    --chart-2: 160 84% 45%;
-    --chart-3: 55 91% 68%;
-    --chart-4: 240 100% 65%;
-    --chart-5: 25 95% 58%;
-    
-    /* Sidebar — slightly darker than card */
-    --sidebar-background: 255 16% 11%;
-    --sidebar-foreground: 250 8% 88%;
-    --sidebar-primary: 270 100% 65%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 255 18% 20%;
-    --sidebar-accent-foreground: 250 8% 88%;
-    --sidebar-border: 255 16% 22%;
-    --sidebar-ring: 270 100% 65%;
+    --background: 255 255 255;
+    --foreground: 30 41 59;
+
+    --card: 248 250 252;
+    --card-foreground: 30 41 59;
+
+    --popover: 255 255 255;
+    --popover-foreground: 30 41 59;
+
+    --primary: 34 197 94;
+    --primary-foreground: 255 255 255;
+
+    --secondary: 241 245 249;
+    --secondary-foreground: 30 41 59;
+
+    --muted: 241 245 249;
+    --muted-foreground: 100 116 139;
+
+    --accent: 34 197 94;
+    --accent-foreground: 255 255 255;
+
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 34 197 94;
+
+    --chart-1: 34 197 94;
+    --chart-2: 59 130 246;
+    --chart-3: 245 158 11;
+    --chart-4: 168 85 247;
+    --chart-5: 239 68 68;
+
+    --sidebar-background: 26 26 46;
+    --sidebar-foreground: 203 213 225;
+    --sidebar-primary: 34 197 94;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 255 255 255 / 0.06;
+    --sidebar-accent-foreground: 255 255 255;
+    --sidebar-border: 255 255 255 / 0.08;
+    --sidebar-ring: 34 197 94;
   }
 }
 
@@ -122,23 +58,30 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: system-ui, -apple-system, sans-serif;
+    background-color: #ffffff;
+    color: #1e293b;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
   h1, h2, h3, h4 {
-    @apply font-semibold tracking-tight;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #1e293b;
   }
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: hsl(var(--muted)); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.5); }
+::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
 
 /* Task card hover */
-.task-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.task-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
 .task-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px hsl(var(--foreground) / 0.10), 0 2px 6px hsl(var(--foreground) / 0.06);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
 }
