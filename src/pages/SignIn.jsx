@@ -75,17 +75,13 @@ export default function SignIn() {
           border: "1px solid #E2E8F0",
         }}
       >
-        {/* Icon */}
-        <div
-          className="flex items-center justify-center mb-6"
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: "50%",
-            background: "#22C55E",
-          }}
-        >
-          <GraduationCap className="w-7 h-7 text-white" />
+        {/* Logo */}
+        <div className="flex items-center justify-center mb-6">
+          <img
+            src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/7e307bbfa_GrowProAgencyLogo_Darkcopy.png"
+            alt="Grow Pro Agency"
+            style={{ height: 48, objectFit: "contain" }}
+          />
         </div>
 
         {/* Title */}
