@@ -282,6 +282,7 @@ export default function StrategicOrganizer() {
       focusOfYear,
     };
     saveSnapshots([newSnap, ...snapshots]);
+    setActiveSnapIdx(0);
     toast.success("Saved");
     setSaving(false);
   };
