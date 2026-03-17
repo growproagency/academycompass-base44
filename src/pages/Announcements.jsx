@@ -211,58 +211,75 @@ export default function Announcements() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-6" style={{ background: "#ffffff", fontFamily: "'Inter', sans-serif" }}>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Announcements</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Team updates and news</p>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1E293B" }}>Announcements</h1>
+          <p style={{ fontSize: 13, color: "#64748B", marginTop: 2 }}>Team updates and news</p>
         </div>
         {isAdmin && (
-          <Button size="sm" onClick={openCreate}>
-            <Plus className="w-4 h-4 mr-1.5" /> Post
-          </Button>
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 transition-colors"
+            style={{ background: "#22C55E", color: "#fff", borderRadius: 8, padding: "8px 16px", fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer" }}
+            onMouseEnter={e => e.currentTarget.style.background = "#16A34A"}
+            onMouseLeave={e => e.currentTarget.style.background = "#22C55E"}
+          >
+            <Plus className="w-4 h-4" /> Post
+          </button>
         )}
       </div>
 
       <div className="space-y-3">
         {announcements.map((ann) => (
-          <Card key={ann.id} className={`p-5 ${ann.is_pinned ? "border-primary/30 bg-primary/5" : ""}`}>
+          <div
+            key={ann.id}
+            className="group transition-all"
+            style={{
+              background: "#ffffff",
+              border: "1px solid #E2E8F0",
+              borderRadius: 10,
+              padding: 20,
+              borderLeft: ann.is_pinned ? "4px solid #22C55E" : "1px solid #E2E8F0",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+            }}
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-2">
                   {ann.is_pinned && (
-                    <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">
-                      <Pin className="w-2.5 h-2.5 mr-0.5" /> Pinned
-                    </Badge>
+                    <span style={{ fontSize: 11, fontWeight: 600, background: "#FEF9C3", color: "#CA8A04", borderRadius: 6, padding: "2px 8px", display: "inline-flex", alignItems: "center", gap: 3 }}>
+                      <Pin className="w-2.5 h-2.5" /> Pinned
+                    </span>
                   )}
-                  <span className="text-[10px] text-muted-foreground">
+                  <span style={{ fontSize: 12, color: "#94A3B8" }}>
                     {ann.created_at ? format(new Date(ann.created_at), "MMM d, yyyy") : ""}
                   </span>
                 </div>
-                <h3 className="font-semibold">{ann.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{ann.content}</p>
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: "#1E293B" }}>{ann.title}</h3>
+                <p style={{ fontSize: 14, color: "#475569", marginTop: 6, whiteSpace: "pre-wrap" }}>{ann.content}</p>
               </div>
               {isAdmin && (
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => togglePin(ann)}>
+                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" style={{ color: "#64748B" }} onClick={() => togglePin(ann)}>
                     {ann.is_pinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(ann)}>
+                  </button>
+                  <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" style={{ color: "#64748B" }} onClick={() => openEdit(ann)}>
                     <Pencil className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteAnn(ann)}>
+                  </button>
+                  <button className="p-1.5 rounded-lg hover:bg-red-50 transition-colors" style={{ color: "#EF4444" }} onClick={() => setDeleteAnn(ann)}>
                     <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  </button>
                 </div>
               )}
             </div>
-          </Card>
+          </div>
         ))}
         {announcements.length === 0 && (
-          <Card className="p-12 text-center">
-            <Megaphone className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No announcements yet</p>
-          </Card>
+          <div className="flex flex-col items-center text-center py-16" style={{ border: "1px solid #E2E8F0", borderRadius: 12, background: "#F8FAFC" }}>
+            <Megaphone className="w-10 h-10 mb-3" style={{ color: "#CBD5E1" }} />
+            <p style={{ fontSize: 14, color: "#64748B" }}>No announcements yet</p>
+          </div>
         )}
       </div>
 

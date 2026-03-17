@@ -27,16 +27,22 @@ import StatCard from "@/components/dashboard/StatCard";
 import TaskDialog from "@/components/tasks/TaskDialog";
 import { toast } from "sonner";
 
-const PRIORITY_STYLES = {
-  high: "bg-red-500/10 text-red-400 border-red-500/20",
-  medium: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  low: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+const PRIORITY_BADGE = {
+  high: { bg: "#FEE2E2", color: "#DC2626" },
+  medium: { bg: "#FEF3C7", color: "#D97706" },
+  low: { bg: "#DBEAFE", color: "#2563EB" },
 };
 
-const STATUS_STYLES = {
-  todo: "bg-secondary text-muted-foreground",
-  in_progress: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  done: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+const STATUS_BADGE_STYLE = {
+  todo: { bg: "#F1F5F9", color: "#64748B" },
+  in_progress: { bg: "#DBEAFE", color: "#2563EB" },
+  done: { bg: "#DCFCE7", color: "#16A34A" },
+};
+
+const STATUS_LEFT_BORDER = {
+  todo: "#CBD5E1",
+  in_progress: "#3B82F6",
+  done: "#22C55E",
 };
 
 const STATUS_LABELS = { todo: "To Do", in_progress: "In Progress", done: "Done" };
@@ -225,28 +231,47 @@ export default function MyTasks() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6" style={{ background: "#ffffff", fontFamily: "'Inter', sans-serif" }}>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">My To-Dos</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Tasks you created or are assigned to</p>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1E293B" }}>My To-Dos</h1>
+          <p style={{ fontSize: 13, color: "#64748B", marginTop: 2 }}>Tasks assigned to you</p>
         </div>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <Plus className="w-4 h-4 mr-1.5" /> New To-Do
-        </Button>
+        <button
+          onClick={() => setCreateOpen(true)}
+          className="flex items-center gap-2 transition-colors"
+          style={{ background: "#22C55E", color: "#fff", borderRadius: 8, padding: "8px 16px", fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer" }}
+          onMouseEnter={e => e.currentTarget.style.background = "#16A34A"}
+          onMouseLeave={e => e.currentTarget.style.background = "#22C55E"}
+        >
+          <Plus className="w-4 h-4" /> New To-Do
+        </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        <StatCard label="Total" value={stats.total} icon={CheckSquare} />
-        <StatCard label="Overdue" value={stats.overdue} icon={AlertCircle} color="text-red-400" />
-        <StatCard label="Completed" value={stats.done} icon={CheckSquare} color="text-emerald-400" />
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: "Total", value: stats.total, icon: CheckSquare, iconColor: "#22C55E" },
+          { label: "Overdue", value: stats.overdue, icon: AlertCircle, iconColor: "#EF4444" },
+          { label: "Completed", value: stats.done, icon: CheckSquare, iconColor: "#22C55E" },
+        ].map(({ label, value, icon: Icon, iconColor }) => (
+          <div key={label} style={{ background: "#ffffff", border: "1px solid #E2E8F0", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p style={{ fontSize: 32, fontWeight: 700, color: "#1E293B", lineHeight: 1 }}>{value}</p>
+                <p style={{ fontSize: 12, color: "#64748B", marginTop: 4 }}>{label}</p>
+              </div>
+              <Icon className="w-6 h-6" style={{ color: iconColor }} />
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
-        <Filter className="w-4 h-4 text-muted-foreground" />
+        <Filter className="w-4 h-4" style={{ color: "#64748B" }} />
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[140px] h-8 text-xs" style={{ border: "1px solid #E2E8F0", borderRadius: 8 }}><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="todo">To Do</SelectItem>
@@ -255,7 +280,7 @@ export default function MyTasks() {
           </SelectContent>
         </Select>
         <Select value={filterPriority} onValueChange={setFilterPriority}>
-          <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[140px] h-8 text-xs" style={{ border: "1px solid #E2E8F0", borderRadius: 8 }}><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Priorities</SelectItem>
             <SelectItem value="high">High</SelectItem>
@@ -269,59 +294,72 @@ export default function MyTasks() {
       <div className="space-y-2">
         {filtered.map((task) => {
           const isOverdue = task.due_date && isPast(parseISO(task.due_date)) && task.status !== "done";
+          const statusStyle = STATUS_BADGE_STYLE[task.status] || STATUS_BADGE_STYLE.todo;
+          const priorityStyle = PRIORITY_BADGE[task.priority] || PRIORITY_BADGE.medium;
           return (
-            <Card
+            <div
               key={task.id}
-              className="p-3 flex items-center gap-3 hover:border-border/80 transition-all cursor-pointer group"
+              className="flex items-center gap-3 cursor-pointer transition-all"
+              style={{
+                background: "#ffffff",
+                border: "1px solid #E2E8F0",
+                borderRadius: 10,
+                padding: "12px 16px",
+                borderLeft: `3px solid ${STATUS_LEFT_BORDER[task.status] || "#CBD5E1"}`,
+                boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+              }}
               onClick={() => setEditTask(task)}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.08)"}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)"}
             >
               <button
                 onClick={(e) => { e.stopPropagation(); handleStatusCycle(task); }}
-                className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors ${
-                  task.status === "done" ? "border-emerald-400 bg-emerald-400/20"
-                  : task.status === "in_progress" ? "border-blue-400 bg-blue-400/20"
-                  : "border-muted-foreground/30 hover:border-primary"
-                }`}
+                className="shrink-0 flex items-center justify-center transition-colors"
+                style={{
+                  width: 20, height: 20, borderRadius: "50%",
+                  border: `2px solid ${task.status === "done" ? "#22C55E" : task.status === "in_progress" ? "#3B82F6" : "#CBD5E1"}`,
+                  background: task.status === "done" ? "rgba(34,197,94,0.15)" : task.status === "in_progress" ? "rgba(59,130,246,0.15)" : "transparent",
+                }}
               >
-                {task.status === "done" && <div className="w-2 h-2 rounded-full bg-emerald-400" />}
-                {task.status === "in_progress" && <div className="w-2 h-2 rounded-full bg-blue-400" />}
+                {task.status === "done" && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22C55E" }} />}
+                {task.status === "in_progress" && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#3B82F6" }} />}
               </button>
 
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${task.status === "done" ? "line-through text-muted-foreground" : ""}`}>
+                <p style={{ fontSize: 14, fontWeight: 500, color: task.status === "done" ? "#94A3B8" : "#1E293B", textDecoration: task.status === "done" ? "line-through" : "none" }}>
                   {task.title}
                 </p>
                 <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 ${PRIORITY_STYLES[task.priority]}`}>
+                  <span style={{ fontSize: 11, fontWeight: 600, background: priorityStyle.bg, color: priorityStyle.color, borderRadius: 6, padding: "2px 8px" }}>
                     {task.priority}
-                  </Badge>
-                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 ${STATUS_STYLES[task.status]}`}>
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 600, background: statusStyle.bg, color: statusStyle.color, borderRadius: 6, padding: "2px 8px" }}>
                     {STATUS_LABELS[task.status]}
-                  </Badge>
+                  </span>
                   {task.rock_id && rockMap.get(task.rock_id) && (
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-primary/5 text-primary/80 border-primary/20">
-                      <Mountain className="w-2.5 h-2.5 mr-0.5" />{rockMap.get(task.rock_id)}
-                    </Badge>
+                    <span style={{ fontSize: 11, background: "#F0FDF4", color: "#16A34A", borderRadius: 6, padding: "2px 8px", display: "inline-flex", alignItems: "center", gap: 3 }}>
+                      <Mountain className="w-2.5 h-2.5" />{rockMap.get(task.rock_id)}
+                    </span>
                   )}
                   {task.due_date && (
-                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 ${isOverdue ? "bg-red-500/10 text-red-400 border-red-500/20" : ""}`}>
-                      {isOverdue ? <AlertCircle className="w-2.5 h-2.5 mr-0.5" /> : <Calendar className="w-2.5 h-2.5 mr-0.5" />}
+                    <span style={{ fontSize: 11, background: isOverdue ? "#FEE2E2" : "#F1F5F9", color: isOverdue ? "#EF4444" : "#64748B", borderRadius: 6, padding: "2px 8px", display: "inline-flex", alignItems: "center", gap: 3 }}>
+                      {isOverdue ? <AlertCircle className="w-2.5 h-2.5" /> : <Calendar className="w-2.5 h-2.5" />}
                       {format(parseISO(task.due_date), "MMM d")}
-                    </Badge>
+                    </span>
                   )}
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 text-muted-foreground">
+                  <span style={{ fontSize: 11, background: "#F1F5F9", color: "#64748B", borderRadius: 6, padding: "2px 8px" }}>
                     {task.assignee?.full_name || "Unassigned"}
-                  </Badge>
+                  </span>
                 </div>
               </div>
-            </Card>
+            </div>
           );
         })}
         {filtered.length === 0 && (
-          <Card className="p-8 text-center">
-            <CheckSquare className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No To-Dos found</p>
-          </Card>
+          <div className="flex flex-col items-center text-center py-12" style={{ border: "1px solid #E2E8F0", borderRadius: 12, background: "#F8FAFC" }}>
+            <CheckSquare className="w-8 h-8 mb-2" style={{ color: "#CBD5E1" }} />
+            <p style={{ fontSize: 14, color: "#64748B" }}>No To-Dos found</p>
+          </div>
         )}
       </div>
 

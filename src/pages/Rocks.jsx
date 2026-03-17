@@ -51,10 +51,10 @@ import { isPast, parseISO, format } from "date-fns";
 import { toast } from "sonner";
 
 const STATUS_CONFIG = {
-  on_track: { label: "On Track", icon: TrendingUp, className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-  off_track: { label: "Off Track", icon: TrendingDown, className: "bg-red-500/10 text-red-400 border-red-500/20" },
-  assist: { label: "Assist", icon: HelpCircle, className: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-  complete: { label: "Complete", icon: CheckCircle2, className: "bg-primary/10 text-primary border-primary/20" },
+  on_track: { label: "On Track", icon: TrendingUp, bg: "#DCFCE7", color: "#16A34A" },
+  off_track: { label: "Off Track", icon: TrendingDown, bg: "#FEE2E2", color: "#DC2626" },
+  assist: { label: "Assist", icon: HelpCircle, bg: "#FEF3C7", color: "#D97706" },
+  complete: { label: "Complete", icon: CheckCircle2, bg: "#DCFCE7", color: "#16A34A" },
 };
 
 function RockFormDialog({ open, onOpenChange, rock, onSuccess, profile, user }) {
@@ -269,15 +269,21 @@ export default function Rocks() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6" style={{ background: "#ffffff", fontFamily: "'Inter', sans-serif" }}>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Rocks</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Your strategic 90-day goals</p>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1E293B" }}>Rocks</h1>
+          <p style={{ fontSize: 13, color: "#64748B", marginTop: 2 }}>Your strategic 90-day goals</p>
         </div>
-        <Button size="sm" onClick={() => { setEditRock(null); setFormOpen(true); }}>
-          <Plus className="w-4 h-4 mr-1.5" /> New Rock
-        </Button>
+        <button
+          onClick={() => { setEditRock(null); setFormOpen(true); }}
+          className="flex items-center gap-2 transition-colors"
+          style={{ background: "#22C55E", color: "#fff", borderRadius: 8, padding: "8px 16px", fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer" }}
+          onMouseEnter={e => e.currentTarget.style.background = "#16A34A"}
+          onMouseLeave={e => e.currentTarget.style.background = "#22C55E"}
+        >
+          <Plus className="w-4 h-4" /> New Rock
+        </button>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -291,69 +297,92 @@ export default function Rocks() {
           const StatusIcon = sc.icon;
 
           return (
-            <Card key={rock.id} className="p-5 hover:border-border/80 transition-all group">
+            <div
+              key={rock.id}
+              className="group transition-all"
+              style={{
+                background: "#ffffff",
+                border: "1px solid #E2E8F0",
+                borderRadius: 12,
+                padding: 20,
+                boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+              }}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.10)"}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.06)"}
+            >
               <div className="flex items-start justify-between mb-3">
                 <Link to={`/RockDetail?id=${rock.id}`} className="flex-1 min-w-0">
-                  <h3 className="font-semibold group-hover:text-primary transition-colors">{rock.name}</h3>
+                  <h3 style={{ fontSize: 15, fontWeight: 600, color: "#1E293B" }} className="hover:text-green-600 transition-colors">{rock.name}</h3>
                 </Link>
-                <div className="flex items-center gap-1 shrink-0 ml-2">
-                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { setEditRock(rock); setFormOpen(true); }}>
+                <div className="flex items-center gap-1 shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => { setEditRock(rock); setFormOpen(true); }} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" style={{ color: "#64748B" }}>
                     <Pencil className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-destructive" onClick={() => setDeleteRock(rock)}>
+                  </button>
+                  <button onClick={() => setDeleteRock(rock)} className="p-1.5 rounded-lg hover:bg-red-50 transition-colors" style={{ color: "#EF4444" }}>
                     <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
+                  </button>
                 </div>
               </div>
 
-              <Badge variant="outline" className={`text-[10px] mb-3 ${sc.className}`}>
-                <StatusIcon className="w-3 h-3 mr-1" />
+              <span
+                className="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-2.5 py-1 mb-3"
+                style={{ background: sc.bg, color: sc.color, fontSize: 11 }}
+              >
+                <StatusIcon className="w-3 h-3" />
                 {sc.label}
-              </Badge>
+              </span>
 
               {rock.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{rock.description}</p>
+                <p className="text-xs line-clamp-2 mb-3" style={{ color: "#64748B" }}>{rock.description}</p>
               )}
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                  <div className="flex items-center justify-between mb-1" style={{ fontSize: 12, color: "#64748B" }}>
                     <span>To-Dos: {doneTasks}/{rockTasks.length}</span>
                     <span>{taskProgress}%</span>
                   </div>
-                  <Progress value={taskProgress} className="h-1.5" />
+                  <div style={{ background: "#E2E8F0", borderRadius: 3, height: 6, overflow: "hidden" }}>
+                    <div style={{ background: "#22C55E", width: `${taskProgress}%`, height: "100%", borderRadius: 3, transition: "width 0.3s" }} />
+                  </div>
                 </div>
 
                 {rockMilestones.length > 0 && (
                   <div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                    <div className="flex items-center justify-between mb-1" style={{ fontSize: 12, color: "#64748B" }}>
                       <span>Milestones: {doneMilestones}/{rockMilestones.length}</span>
                     </div>
-                    <Progress value={rockMilestones.length > 0 ? (doneMilestones / rockMilestones.length) * 100 : 0} className="h-1.5" />
+                    <div style={{ background: "#E2E8F0", borderRadius: 3, height: 6, overflow: "hidden" }}>
+                      <div style={{ background: "#22C55E", width: `${rockMilestones.length > 0 ? (doneMilestones / rockMilestones.length) * 100 : 0}%`, height: "100%", borderRadius: 3 }} />
+                    </div>
                   </div>
                 )}
               </div>
 
               {rock.due_date && (
-                <div className={`flex items-center gap-1 mt-3 text-[11px] ${isPast(parseISO(rock.due_date)) ? "text-red-400" : "text-muted-foreground"}`}>
+                <div className="flex items-center gap-1 mt-3" style={{ fontSize: 11, color: isPast(parseISO(rock.due_date)) ? "#EF4444" : "#64748B" }}>
                   {isPast(parseISO(rock.due_date)) ? <AlertCircle className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
                   Due {format(parseISO(rock.due_date), "MMM d, yyyy")}
                 </div>
               )}
-            </Card>
+            </div>
           );
         })}
       </div>
 
       {rocks.length === 0 && (
-        <Card className="p-12 flex flex-col items-center text-center">
-          <Mountain className="w-10 h-10 text-muted-foreground mb-3" />
-          <h3 className="font-semibold">No Rocks yet</h3>
-          <p className="text-sm text-muted-foreground mt-1">Create your first strategic 90-day goal</p>
-          <Button className="mt-4" onClick={() => { setEditRock(null); setFormOpen(true); }}>
-            <Plus className="w-4 h-4 mr-1.5" /> Create Rock
-          </Button>
-        </Card>
+        <div className="flex flex-col items-center text-center py-16" style={{ border: "1px solid #E2E8F0", borderRadius: 12, background: "#F8FAFC" }}>
+          <Mountain className="w-10 h-10 mb-3" style={{ color: "#CBD5E1" }} />
+          <h3 style={{ fontWeight: 600, color: "#1E293B" }}>No Rocks yet</h3>
+          <p className="text-sm mt-1" style={{ color: "#64748B" }}>Create your first strategic 90-day goal</p>
+          <button
+            className="mt-4 flex items-center gap-2"
+            onClick={() => { setEditRock(null); setFormOpen(true); }}
+            style={{ background: "#22C55E", color: "#fff", borderRadius: 8, padding: "8px 16px", fontSize: 14, fontWeight: 600, cursor: "pointer", border: "none" }}
+          >
+            <Plus className="w-4 h-4" /> Create Rock
+          </button>
+        </div>
       )}
 
       <RockFormDialog 

@@ -29,16 +29,16 @@ import {
   isToday,
 } from "date-fns";
 
-const PRIORITY_DOT = {
-  high: "bg-red-400",
-  medium: "bg-amber-400",
-  low: "bg-blue-400",
+const PRIORITY_DOT_COLOR = {
+  high: "#EF4444",
+  medium: "#F59E0B",
+  low: "#3B82F6",
 };
 
-const STATUS_BADGE = {
-  todo: "bg-slate-500/20 text-slate-400",
-  in_progress: "bg-blue-500/20 text-blue-400",
-  done: "bg-emerald-500/20 text-emerald-400",
+const STATUS_CHIP = {
+  todo: { bg: "#F1F5F9", color: "#64748B" },
+  in_progress: { bg: "#DBEAFE", color: "#2563EB" },
+  done: { bg: "#DCFCE7", color: "#16A34A" },
 };
 
 export default function CalendarPage() {
@@ -172,72 +172,113 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6" style={{ background: "#ffffff", fontFamily: "'Inter', sans-serif" }}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Calendar</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">To-Dos and milestones timeline</p>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: "#1E293B" }}>Calendar</h1>
+          <p style={{ fontSize: 13, color: "#64748B", marginTop: 2 }}>To-Dos and milestones timeline</p>
         </div>
-        <Tabs value={view} onValueChange={setView}>
-          <TabsList className="bg-secondary">
-            <TabsTrigger value="weekly" className="text-xs">Weekly</TabsTrigger>
-            <TabsTrigger value="monthly" className="text-xs">Monthly</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* View toggle */}
+        <div className="flex" style={{ border: "1px solid #E2E8F0", borderRadius: 8, overflow: "hidden" }}>
+          {["weekly", "monthly"].map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              style={{
+                padding: "6px 16px",
+                fontSize: 13,
+                fontWeight: 600,
+                background: view === v ? "#22C55E" : "#ffffff",
+                color: view === v ? "#ffffff" : "#64748B",
+                border: "none",
+                cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+            >
+              {v.charAt(0).toUpperCase() + v.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Navigation */}
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+        <button
+          onClick={() => navigate(-1)}
+          style={{ padding: "6px 10px", border: "1px solid #E2E8F0", borderRadius: 8, background: "#ffffff", cursor: "pointer", color: "#64748B" }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = "#22C55E"}
+          onMouseLeave={e => e.currentTarget.style.borderColor = "#E2E8F0"}
+        >
           <ChevronLeft className="w-4 h-4" />
-        </Button>
-        <h2 className="text-lg font-semibold">
+        </button>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1E293B" }}>
           {view === "weekly"
             ? `${format(days[0], "MMM d")} — ${format(days[days.length - 1], "MMM d, yyyy")}`
             : format(currentDate, "MMMM yyyy")}
         </h2>
-        <Button variant="ghost" size="icon" onClick={() => navigate(1)}>
+        <button
+          onClick={() => navigate(1)}
+          style={{ padding: "6px 10px", border: "1px solid #E2E8F0", borderRadius: 8, background: "#ffffff", cursor: "pointer", color: "#64748B" }}
+          onMouseEnter={e => e.currentTarget.style.borderColor = "#22C55E"}
+          onMouseLeave={e => e.currentTarget.style.borderColor = "#E2E8F0"}
+        >
           <ChevronRight className="w-4 h-4" />
-        </Button>
+        </button>
       </div>
 
       {view === "weekly" ? (
-        /* Weekly View */
         <div className="grid grid-cols-7 gap-2">
           {days.map((day) => {
             const events = getEventsForDay(day);
             const today = isToday(day);
             return (
-              <div key={day.toISOString()} className="min-h-[120px]">
-                <div className={`text-center text-xs font-medium mb-2 ${today ? "text-primary" : "text-muted-foreground"}`}>
-                  <div className="text-[10px] uppercase">{format(day, "EEE")}</div>
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center mx-auto ${today ? "bg-primary text-primary-foreground" : ""}`}>
+              <div key={day.toISOString()} style={{ minHeight: 120 }}>
+                <div className="text-center mb-2">
+                  <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", color: "#64748B", letterSpacing: "0.06em" }}>{format(day, "EEE")}</div>
+                  <div
+                    className="flex items-center justify-center mx-auto"
+                    style={{
+                      width: 28, height: 28, borderRadius: "50%",
+                      background: today ? "#22C55E" : "transparent",
+                      color: today ? "#ffffff" : "#1E293B",
+                      fontSize: 13, fontWeight: today ? 700 : 500,
+                    }}
+                  >
                     {format(day, "d")}
                   </div>
                 </div>
-                <div className="space-y-1">
+                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                   {events.tasks.map((t) => {
                     const overdue = t.status !== 'done' && isPast(parseISO(t.due_date));
+                    const chip = STATUS_CHIP[t.status] || STATUS_CHIP.todo;
                     return (
-                      <div key={t.id} className={`flex flex-col gap-0.5 px-1.5 py-1 rounded border text-[10px] cursor-pointer hover:opacity-80 transition-opacity ${overdue ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-card border-border/40'}`}>
+                      <div
+                        key={t.id}
+                        style={{
+                          background: overdue ? "#FEE2E2" : "#F8FAFC",
+                          border: `1px solid ${overdue ? "#FECACA" : "#E2E8F0"}`,
+                          borderRadius: 6,
+                          padding: "3px 6px",
+                          fontSize: 10,
+                          cursor: "pointer",
+                        }}
+                      >
                         <div className="flex items-center gap-1">
-                          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`} />
-                          <span className="truncate font-medium">{t.title}</span>
+                          <div style={{ width: 6, height: 6, borderRadius: "50%", background: PRIORITY_DOT_COLOR[t.priority], flexShrink: 0 }} />
+                          <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: overdue ? "#EF4444" : "#1E293B" }}>{t.title}</span>
                         </div>
-                        <div className="flex items-center gap-1 pl-2.5 text-[9px]">
-                          <span className={`px-1.5 py-0.5 rounded-full font-medium capitalize ${STATUS_BADGE[t.status]}`}>
-                            {t.status === 'in_progress' ? 'In Progress' : t.status}
+                        <div className="flex items-center gap-1 mt-0.5 pl-2.5">
+                          <span style={{ fontSize: 9, fontWeight: 600, background: chip.bg, color: chip.color, borderRadius: 4, padding: "1px 5px" }}>
+                            {t.status === 'in_progress' ? 'In Progress' : t.status === 'done' ? 'Done' : 'To Do'}
                           </span>
-                          {isAdmin && (
-                            <span className="text-muted-foreground">{t.assignee_name || 'Unassigned'}</span>
-                          )}
+                          {isAdmin && <span style={{ fontSize: 9, color: "#94A3B8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.assignee_name || 'Unassigned'}</span>}
                         </div>
                       </div>
                     );
                   })}
                   {events.milestones.map((m) => (
-                    <div key={m.id} className="flex items-center gap-1 px-1.5 py-1 bg-violet-500/10 rounded border border-violet-500/20 text-[10px] text-violet-400">
-                      <span className="truncate">{m.title}</span>
+                    <div key={m.id} style={{ background: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: 6, padding: "3px 6px", fontSize: 10, color: "#7C3AED" }}>
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{m.title}</span>
                     </div>
                   ))}
                 </div>
@@ -246,50 +287,60 @@ export default function CalendarPage() {
           })}
         </div>
       ) : (
-        /* Monthly View */
         <div>
-          <div className="grid grid-cols-7 gap-px mb-1">
+          <div className="grid grid-cols-7 mb-1">
             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-              <div key={d} className="text-center text-[10px] uppercase text-muted-foreground font-medium py-2">{d}</div>
+              <div key={d} style={{ textAlign: "center", fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 600, letterSpacing: "0.06em", padding: "8px 0" }}>{d}</div>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-px bg-border/30 rounded-lg overflow-hidden">
-            {days.map((day) => {
+          <div className="grid grid-cols-7" style={{ border: "1px solid #F1F5F9", borderRadius: 12, overflow: "hidden" }}>
+            {days.map((day, idx) => {
               const events = getEventsForDay(day);
               const today = isToday(day);
               const inMonth = isSameMonth(day, currentDate);
               return (
                 <div
                   key={day.toISOString()}
-                  className={`min-h-[80px] p-1.5 bg-card ${!inMonth ? "opacity-30" : ""}`}
+                  style={{
+                    minHeight: 80,
+                    padding: 6,
+                    background: "#ffffff",
+                    borderRight: (idx + 1) % 7 !== 0 ? "1px solid #F1F5F9" : "none",
+                    borderBottom: "1px solid #F1F5F9",
+                    opacity: inMonth ? 1 : 0.35,
+                  }}
                 >
-                  <div className={`text-[11px] font-medium mb-1 ${today ? "text-primary" : "text-muted-foreground"}`}>
-                    <span className={`${today ? "bg-primary text-primary-foreground rounded-full px-1.5 py-0.5" : ""}`}>
+                  <div style={{ marginBottom: 4 }}>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: today ? 700 : 500,
+                        background: today ? "#22C55E" : "transparent",
+                        color: today ? "#ffffff" : "#1E293B",
+                        borderRadius: "50%",
+                        padding: today ? "2px 6px" : "0",
+                        display: "inline-block",
+                      }}
+                    >
                       {format(day, "d")}
                     </span>
                   </div>
-                  <div className="space-y-0.5">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     {events.tasks.slice(0, 3).map((t) => {
-                       const overdue = t.status !== 'done' && isPast(parseISO(t.due_date));
-                       return (
-                         <div key={t.id} className={`flex flex-col gap-0 text-[9px] cursor-pointer hover:opacity-80 ${overdue ? 'text-red-400' : ''}`}>
-                           <div className="flex items-center gap-0.5">
-                             <div className={`w-1 h-1 rounded-full shrink-0 ${PRIORITY_DOT[t.priority]}`} />
-                             <span className="truncate">{t.title}</span>
-                           </div>
-                           <div className="flex items-center gap-0.5 pl-1.5">
-                             <span className={`px-1 py-0 rounded text-[8px] font-medium capitalize ${STATUS_BADGE[t.status]}`}>
-                               {t.status === 'in_progress' ? 'In Prog' : t.status === 'done' ? 'Done' : 'Todo'}
-                             </span>
-                             {isAdmin && t.assignee_name && (
-                               <span className="truncate text-muted-foreground">{t.assignee_name}</span>
-                             )}
-                           </div>
-                         </div>
-                       );
-                     })}
+                      const overdue = t.status !== 'done' && isPast(parseISO(t.due_date));
+                      const chip = STATUS_CHIP[t.status] || STATUS_CHIP.todo;
+                      return (
+                        <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <div style={{ width: 5, height: 5, borderRadius: "50%", background: PRIORITY_DOT_COLOR[t.priority], flexShrink: 0 }} />
+                          <span style={{ fontSize: 9, fontWeight: 600, background: chip.bg, color: overdue ? "#EF4444" : chip.color, borderRadius: 3, padding: "1px 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
+                            {t.status === 'done' ? 'Done' : t.status === 'in_progress' ? 'In Prog' : 'To Do'}
+                          </span>
+                          {isAdmin && t.assignee_name && <span style={{ fontSize: 8, color: "#94A3B8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.assignee_name}</span>}
+                        </div>
+                      );
+                    })}
                     {events.tasks.length > 3 && (
-                      <span className="text-[9px] text-muted-foreground">+{events.tasks.length - 3} more</span>
+                      <span style={{ fontSize: 9, color: "#94A3B8" }}>+{events.tasks.length - 3} more</span>
                     )}
                   </div>
                 </div>
