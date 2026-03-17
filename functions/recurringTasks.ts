@@ -2,19 +2,21 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('VITE_SUPABASE_URL');
     const supabaseKey = Deno.env.get('VITE_SUPABASE_ANON_KEY');
+    // Use service role key if available, fall back to anon (anon won't bypass RLS)
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || supabaseKey;
 
     const headers = {
-      apikey: supabaseKey,
-      Authorization: `Bearer ${supabaseKey}`,
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
       'Content-Type': 'application/json',
     };
 
     const todayStr = new Date().toISOString().split('T')[0];
     console.log(`[RecurringTasks] Running for today: ${todayStr}`);
 
-    // Fetch all non-archived tasks with a repeat_frequency set (not "none")
+    // Fetch all non-archived tasks — filter in code to handle different possible column names
     const tasksRes = await fetch(
-      `${supabaseUrl}/rest/v1/tasks?select=*`,
+      `${supabaseUrl}/rest/v1/tasks?archived_at=is.null&select=*`,
       { headers }
     );
 
@@ -24,7 +26,22 @@ Deno.serve(async (req) => {
       return Response.json({ error: `Failed to fetch tasks: ${err}` }, { status: 500 });
     }
 
-    const tasks = await tasksRes.json();
+    const allTasks = await tasksRes.json();
+
+    // Determine the repeat column name dynamically from the first task
+    const sampleTask = allTasks[0] || {};
+    const repeatCol = 'repeat_frequency' in sampleTask ? 'repeat_frequency'
+                    : 'repeat' in sampleTask ? 'repeat'
+                    : null;
+
+    console.log(`[RecurringTasks] Using repeat column: "${repeatCol}", total tasks fetched: ${allTasks.length}`);
+
+    if (!repeatCol) {
+      return Response.json({ error: 'Could not determine repeat column name', sampleKeys: Object.keys(sampleTask) }, { status: 500 });
+    }
+
+    // Filter to recurring tasks only
+    const tasks = allTasks.filter(t => t[repeatCol] && t[repeatCol] !== 'none');
     console.log(`[RecurringTasks] Found ${tasks.length} recurring task(s)`);
 
     const results = [];
@@ -38,41 +55,33 @@ Deno.serve(async (req) => {
       const dueDate = new Date(task.due_date + 'T00:00:00Z');
       const today = new Date(todayStr + 'T00:00:00Z');
 
-      // Only process tasks whose due_date is today or in the past (they need a next occurrence)
+      // Only process tasks whose due_date is today or in the past
       if (dueDate > today) {
         console.log(`[RecurringTasks] Task "${task.title}" due ${task.due_date} is in the future, skipping`);
         continue;
       }
 
-      // Calculate next due date based on repeat_frequency
+      // Advance nextDue by frequency until it is strictly in the future (after today)
       const nextDue = new Date(dueDate);
-      const freq = task.repeat_frequency;
+      const freq = task[repeatCol];
 
       if (freq === 'daily') {
-        // Advance from due_date by 1-day increments until we reach today or beyond
-        while (nextDue <= today) {
-          nextDue.setDate(nextDue.getDate() + 1);
-        }
+        while (nextDue <= today) nextDue.setDate(nextDue.getDate() + 1);
       } else if (freq === 'weekly') {
-        while (nextDue <= today) {
-          nextDue.setDate(nextDue.getDate() + 7);
-        }
+        while (nextDue <= today) nextDue.setDate(nextDue.getDate() + 7);
       } else if (freq === 'bi-weekly') {
-        while (nextDue <= today) {
-          nextDue.setDate(nextDue.getDate() + 14);
-        }
+        while (nextDue <= today) nextDue.setDate(nextDue.getDate() + 14);
       } else if (freq === 'monthly') {
-        while (nextDue <= today) {
-          nextDue.setMonth(nextDue.getMonth() + 1);
-        }
+        while (nextDue <= today) nextDue.setMonth(nextDue.getMonth() + 1);
       } else {
+        console.log(`[RecurringTasks] Unknown frequency "${freq}" for task "${task.title}", skipping`);
         continue;
       }
 
       const nextDueStr = nextDue.toISOString().split('T')[0];
       console.log(`[RecurringTasks] Task "${task.title}" (${task.id}): next occurrence → ${nextDueStr}`);
 
-      // Duplicate check: skip if a task with same title, org, and next due date already exists
+      // Duplicate check
       const dupRes = await fetch(
         `${supabaseUrl}/rest/v1/tasks?title=eq.${encodeURIComponent(task.title)}&organization_id=eq.${task.organization_id}&due_date=eq.${nextDueStr}&archived_at=is.null&select=id`,
         { headers }
@@ -83,7 +92,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Create the new task — same details, new due_date, reset to "todo"
+      // Create next occurrence — same details, new due_date, status reset to "todo"
       const newTask = {
         title: task.title,
         description: task.description || null,
@@ -96,7 +105,7 @@ Deno.serve(async (req) => {
         rock_id: task.rock_id || null,
         organization_id: task.organization_id,
         created_by: task.created_by || null,
-        repeat_frequency: task.repeat_frequency,
+        [repeatCol]: freq,
       };
 
       const createRes = await fetch(`${supabaseUrl}/rest/v1/tasks`, {
@@ -121,6 +130,7 @@ Deno.serve(async (req) => {
       processed: tasks.length,
       created: results.filter(r => r.status === 'created').length,
       results,
+      repeatColumn: repeatCol,
     });
   } catch (error) {
     console.error('[RecurringTasks] Unexpected error:', error);
