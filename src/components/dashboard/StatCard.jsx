@@ -3,18 +3,16 @@ import { Card } from "@/components/ui/card";
 
 export default function StatCard({ label, value, icon: Icon, color = "text-primary" }) {
   return (
-    <Card className="p-4 bg-card border-border/50">
+    <div style={{ background: "#ffffff", border: "1px solid #E2E8F0", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-2xl font-bold tracking-tight">{value}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+          <p style={{ fontSize: 32, fontWeight: 700, color: "#1E293B", lineHeight: 1 }}>{value}</p>
+          <p style={{ fontSize: 12, color: "#64748B", marginTop: 4 }}>{label}</p>
         </div>
         {Icon && (
-          <div className={`p-2.5 rounded-xl bg-secondary ${color}`}>
-            <Icon className="w-4.5 h-4.5" />
-          </div>
+          <Icon className={`w-6 h-6 ${color}`} />
         )}
       </div>
-    </Card>
+    </div>
   );
 }

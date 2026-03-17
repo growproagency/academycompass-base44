@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import TaskCard from "@/components/tasks/TaskCard";
 
 const COLUMN_CONFIG = {
-  todo: { label: "To Do", icon: Circle, color: "text-muted-foreground" },
-  in_progress: { label: "In Progress", icon: Timer, color: "text-blue-400" },
-  done: { label: "Done", icon: CheckCircle2, color: "text-emerald-400" },
+  todo: { label: "To Do", icon: Circle, badgeBg: "#F1F5F9", badgeColor: "#64748B" },
+  in_progress: { label: "In Progress", icon: Timer, badgeBg: "#DBEAFE", badgeColor: "#2563EB" },
+  done: { label: "Done", icon: CheckCircle2, badgeBg: "#DCFCE7", badgeColor: "#16A34A" },
 };
 
 export default function KanbanColumn({ status, tasks, onTaskClick, onStatusChange, onCreateClick, rockMap }) {
@@ -18,21 +18,20 @@ export default function KanbanColumn({ status, tasks, onTaskClick, onStatusChang
       {/* Column header */}
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
-          <Icon className={`w-4 h-4 ${config.color}`} />
-          <span className="text-sm font-semibold">{config.label}</span>
-          <span className="text-xs text-muted-foreground bg-secondary rounded-full px-2 py-0.5">
+          <span style={{ fontSize: 14, fontWeight: 600, color: "#1E293B" }}>{config.label}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, background: config.badgeBg, color: config.badgeColor, borderRadius: 20, padding: "1px 8px" }}>
             {tasks.length}
           </span>
         </div>
         {status === "todo" && onCreateClick && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-muted-foreground hover:text-primary"
+          <button
             onClick={onCreateClick}
+            style={{ padding: "2px 6px", border: "1px solid #E2E8F0", borderRadius: 6, background: "#ffffff", cursor: "pointer", color: "#64748B" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#22C55E"; e.currentTarget.style.color = "#22C55E"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#E2E8F0"; e.currentTarget.style.color = "#64748B"; }}
           >
             <Plus className="w-3.5 h-3.5" />
-          </Button>
+          </button>
         )}
       </div>
 
@@ -48,8 +47,8 @@ export default function KanbanColumn({ status, tasks, onTaskClick, onStatusChang
           />
         ))}
         {tasks.length === 0 && (
-          <div className="flex items-center justify-center h-20 border border-dashed border-border/50 rounded-lg">
-            <p className="text-xs text-muted-foreground">No tasks</p>
+          <div className="flex items-center justify-center h-20" style={{ border: "1.5px dashed #E2E8F0", borderRadius: 10 }}>
+            <p style={{ fontSize: 12, color: "#94A3B8" }}>No tasks</p>
           </div>
         )}
       </div>
