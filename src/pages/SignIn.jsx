@@ -92,9 +92,17 @@ export default function SignIn() {
     // Server-side validation
     try {
       const { base44 } = await import('@/api/base44Client');
-      const res = await base44.functions.invoke('validateEmail', { email: email.trim() });
-      if (!res.data?.valid) {
-        setEmailError(res.data?.error || 'Invalid email address.');
+      const [emailRes, pwRes] = await Promise.all([
+        base44.functions.invoke('validateEmail', { email: email.trim() }),
+        base44.functions.invoke('validatePassword', { password }),
+      ]);
+      if (!emailRes.data?.valid) {
+        setEmailError(emailRes.data?.error || 'Invalid email address.');
+        setIsLoading(false);
+        return;
+      }
+      if (!pwRes.data?.valid) {
+        setPasswordError(pwRes.data?.error || 'Invalid password.');
         setIsLoading(false);
         return;
       }
