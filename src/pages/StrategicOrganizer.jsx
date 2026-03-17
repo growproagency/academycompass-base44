@@ -457,7 +457,17 @@ export default function StrategicOrganizer() {
                     <Button size="sm" variant="default" className="text-xs h-7 bg-emerald-600 hover:bg-emerald-700" disabled>
                       <RotateCcw className="w-3 h-3 mr-1" /> Restore
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" disabled>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={async () => {
+                      if (!plans[0]?.id) return;
+                      const { error } = await supabase.from("strategic_plans").delete().eq("id", plans[0].id);
+                      if (error) { toast.error(error.message); return; }
+                      setPlanId(null);
+                      setSchoolName(""); setMission(""); setBhag(""); setValuesBullets([""]); setIcp("");
+                      setThreeYear({}); setOneYear({}); setNinetyDay({}); setParkingLot([""]); setFocusOfYear("");
+                      queryClient.invalidateQueries({ queryKey: ["strategic-plans"] });
+                      setShowHistory(false);
+                      toast.success("Plan deleted");
+                    }}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
