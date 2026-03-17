@@ -198,6 +198,11 @@ export default function SignIn() {
               {message.text}
             </div>
           )}
+          {rateLimitError && (
+            <div className="p-3 rounded-lg text-sm bg-red-500/10 text-red-600 border border-red-500/20">
+              {rateLimitError}
+            </div>
+          )}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
