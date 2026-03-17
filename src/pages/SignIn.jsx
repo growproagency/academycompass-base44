@@ -31,6 +31,7 @@ export default function SignIn() {
   const [passwordError, setPasswordError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [rateLimitError, setRateLimitError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
