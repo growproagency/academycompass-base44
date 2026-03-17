@@ -37,21 +37,37 @@ export default function SignIn() {
     });
   }, [navigate]);
 
+  const checkProfileAndRedirect = async (userId) => {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('status, organization_id')
+      .eq('auth_user_id', userId)
+      .maybeSingle();
+
+    if (error || !profile || !profile.organization_id || (profile.status !== 'approved' && profile.status !== 'active')) {
+      navigate('/AccessPending');
+    } else {
+      navigate('/Dashboard');
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (!email.trim() || !password.trim()) {
+      toast.error('Please enter your email and password.');
+      return;
+    }
     setIsLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       toast.error(error.message);
       setIsLoading(false);
     } else {
       toast.success('Login successful!');
-      navigate('/Dashboard');
+      await checkProfileAndRedirect(data.user.id);
+      setIsLoading(false);
     }
   };
 
@@ -60,7 +76,7 @@ export default function SignIn() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/Dashboard',
+        redirectTo: window.location.origin + '/SignIn?oauth_callback=1',
       },
     });
 
@@ -69,6 +85,18 @@ export default function SignIn() {
       setIsLoading(false);
     }
   };
+
+  // Handle Google OAuth redirect callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('oauth_callback')) {
+      supabase.auth.getSession().then(async ({ data: { session } }) => {
+        if (session) {
+          await checkProfileAndRedirect(session.user.id);
+        }
+      });
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
