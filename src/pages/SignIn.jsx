@@ -71,7 +71,7 @@ export default function SignIn() {
           background: "#141414",
           borderRadius: 16,
           boxShadow: "0 4px 32px rgba(0,0,0,0.5)",
-          padding: "32px 40px 32px",
+          padding: "24px 40px 32px",
           border: "1px solid #2a2a2a",
         }}
       >
@@ -79,11 +79,11 @@ export default function SignIn() {
         <img
           src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/8eb22fe87_GrowProAgencyLogo_Darkcopy.png"
           alt="Grow Pro Agency"
-          style={{ width: 160, height: "auto", display: "block", margin: "0 auto 8px" }}
+          style={{ width: 160, height: "auto", display: "block", margin: "0 auto 4px" }}
         />
 
         {/* Title */}
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#ffffff", marginTop: 0, marginBottom: 4, lineHeight: 1.2, textAlign: "center" }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: "#ffffff", marginTop: 0, marginBottom: 6, paddingTop: 0, lineHeight: 1.2, textAlign: "center" }}>
           Welcome Back
         </h1>
         <p style={{ fontSize: 14, color: "#94A3B8", marginBottom: 20, textAlign: "center" }}>
