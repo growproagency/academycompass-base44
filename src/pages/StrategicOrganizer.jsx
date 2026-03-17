@@ -256,7 +256,7 @@ export default function StrategicOrganizer() {
       if (data) setPlanId(data.id);
     }
 
-    queryClient.invalidateQueries({ queryKey: ["strategic-plans"] });
+    setSaveCount(c => c + 1);
     toast.success("Saved");
     setSaving(false);
   };
