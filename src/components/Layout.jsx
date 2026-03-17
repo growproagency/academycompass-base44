@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/components/lib/supabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/lib/SupabaseAuthContext";
@@ -13,15 +13,9 @@ import {
   LayoutGrid,
   Shield,
   Menu,
-  X,
   LogOut,
-  Search,
+  GraduationCap,
 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-
-const LOGO_URL = "https://images.unsplash.com/photo-1555597673-b21d5c935865?w=40&h=40&fit=crop&crop=center";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/Dashboard" },
@@ -40,15 +34,13 @@ const adminItems = [
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
-
   const { user: authUser, profile } = useAuth();
 
-  const { data: myTaskCount } = useQuery({
+  const { data: myTaskCount = 0 } = useQuery({
     queryKey: ["tasks-my-count", profile?.id, profile?.organization_id],
     queryFn: async () => {
       if (!profile?.organization_id || !profile?.id) return 0;
-      const { count, error } = await supabase
+      const { count } = await supabase
         .from('tasks')
         .select('id', { count: 'exact', head: true })
         .eq('organization_id', profile.organization_id)
@@ -61,8 +53,6 @@ export default function Layout() {
     enabled: !!profile?.organization_id && !!profile?.id,
   });
 
-  const overdueCount = myTaskCount;
-
   const isAdmin = profile?.role === "admin";
   const initials = profile?.full_name?.charAt(0)?.toUpperCase() || authUser?.email?.charAt(0)?.toUpperCase() || "U";
 
@@ -70,9 +60,9 @@ export default function Layout() {
     setSidebarOpen(false);
   }, [location.pathname]);
 
-  // Add dark class to html
+  // Remove dark class — light mode
   useEffect(() => {
-    document.documentElement.classList.add("dark");
+    document.documentElement.classList.remove("dark");
   }, []);
 
   const NavItem = ({ item }) => {
@@ -80,64 +70,87 @@ export default function Layout() {
       item.path === "/Dashboard"
         ? location.pathname === "/Dashboard" || location.pathname === "/"
         : location.pathname.startsWith(item.path);
-    const showBadge = item.path === "/MyTasks" && overdueCount > 0;
+    const showBadge = item.path === "/MyTasks" && myTaskCount > 0;
 
     return (
       <Link
         to={item.path}
-        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 relative ${
           isActive
-            ? "bg-primary/10 text-primary border-l-2 border-primary ml-0"
-            : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            ? "text-white"
+            : "text-[#CBD5E1] hover:text-white hover:bg-white/[0.06]"
         }`}
+        style={isActive ? { background: "rgba(34,197,94,0.15)" } : {}}
       >
-        <item.icon className="w-4.5 h-4.5 shrink-0" />
+        {isActive && (
+          <span
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 rounded-r-full"
+            style={{ background: "#22C55E" }}
+          />
+        )}
+        <item.icon className="w-4 h-4 shrink-0" style={isActive ? { color: "#22C55E" } : {}} />
         <span className="flex-1">{item.label}</span>
         {showBadge && (
-          <Badge variant="destructive" className="h-5 min-w-[20px] text-[10px] px-1.5">
-            {overdueCount > 99 ? "99+" : overdueCount}
-          </Badge>
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500 text-white min-w-[18px] text-center">
+            {myTaskCount > 99 ? "99+" : myTaskCount}
+          </span>
         )}
       </Link>
     );
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden" style={{ background: "#ffffff" }}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-[260px] bg-sidebar flex flex-col border-r border-sidebar-border transform transition-transform duration-300 ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 flex flex-col transform transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
+        style={{
+          width: 240,
+          background: "#1A1A2E",
+          boxShadow: "4px 0 24px rgba(0,0,0,0.15)",
+        }}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-5 h-16 border-b border-sidebar-border shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-            <Mountain className="w-4.5 h-4.5 text-primary" />
+        <div className="flex flex-col px-5 pt-6 pb-4 shrink-0">
+          <div className="flex items-center gap-3 mb-1">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: "#22C55E" }}
+            >
+              <GraduationCap className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-white text-[15px] tracking-tight leading-tight">
+              Academy Compass
+            </span>
           </div>
-          <span className="font-semibold text-sidebar-foreground tracking-tight">
-            Academy Compass
-          </span>
+          <p className="text-[10px] font-medium pl-12" style={{ color: "#4ADE80" }}>
+            Powered by Grow Pro
+          </p>
         </div>
 
+        {/* Divider */}
+        <div className="mx-4 mb-3" style={{ height: 1, background: "rgba(255,255,255,0.08)" }} />
+
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-3 py-1 space-y-0.5">
           {menuItems.map((item) => (
             <NavItem key={item.path} item={item} />
           ))}
 
           {isAdmin && (
             <>
-              <div className="pt-4 pb-1 px-3">
-                <span className="text-[10px] uppercase tracking-widest text-sidebar-foreground/40 font-semibold">
+              <div className="pt-5 pb-2 px-3">
+                <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: "#64748B" }}>
                   Administration
                 </span>
               </div>
@@ -149,33 +162,31 @@ export default function Layout() {
         </nav>
 
         {/* User footer */}
-        <div className="border-t border-sidebar-border px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8 bg-primary/20 text-primary">
-              <AvatarFallback className="bg-primary/20 text-primary text-sm font-semibold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+        <div className="px-3 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="flex items-center gap-3 px-2">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold text-white"
+              style={{ background: "#22C55E" }}
+            >
+              {initials}
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">
-                {profile?.full_name || authUser?.email || "User"}
+              <p className="text-sm font-semibold text-white truncate leading-tight">
+                {profile?.full_name || "User"}
               </p>
-              <p className="text-[11px] text-sidebar-foreground/50 truncate">
+              <p className="text-[11px] truncate" style={{ color: "#64748B" }}>
                 {authUser?.email || ""}
               </p>
             </div>
             <button
               onClick={async () => {
-                try {
-                  console.log('🚪 Layout: Signing out...');
-                  await supabase.auth.signOut();
-                  window.location.replace('/SignIn');
-                } catch (error) {
-                  console.error('❌ Layout sign out error:', error);
-                  window.location.replace('/SignIn');
-                }
+                await supabase.auth.signOut();
+                window.location.replace('/SignIn');
               }}
-              className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
+              className="p-1.5 rounded-lg transition-colors"
+              style={{ color: "#64748B" }}
+              onMouseEnter={e => e.currentTarget.style.color = "#ffffff"}
+              onMouseLeave={e => e.currentTarget.style.color = "#64748B"}
               title="Sign out"
             >
               <LogOut className="w-4 h-4" />
@@ -185,18 +196,24 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden" style={{ background: "#ffffff" }}>
         {/* Mobile header */}
-        <header className="lg:hidden flex items-center gap-3 px-4 h-14 border-b border-border bg-card shrink-0">
+        <header
+          className="lg:hidden flex items-center gap-3 px-4 h-14 shrink-0"
+          style={{ borderBottom: "1px solid #E2E8F0", background: "#ffffff" }}
+        >
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-1.5 rounded-md hover:bg-secondary"
+            className="p-1.5 rounded-lg"
+            style={{ color: "#64748B" }}
           >
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <Mountain className="w-4 h-4 text-primary" />
-            <span className="font-semibold text-sm">Academy Compass</span>
+            <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "#22C55E" }}>
+              <GraduationCap className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="font-bold text-sm" style={{ color: "#1E293B" }}>Academy Compass</span>
           </div>
         </header>
 
