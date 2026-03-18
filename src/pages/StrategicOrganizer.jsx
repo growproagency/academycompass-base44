@@ -381,15 +381,104 @@ export default function StrategicOrganizer() {
     );
   }
 
-  // Member read-only preview
+  // Member read-only preview — same format as StrategicOrganizerPreview
   if (!isAdmin) {
-    return <StrategicOrganizerMemberView
-      schoolName={schoolName} mission={mission} bhag={bhag}
-      valuesBullets={valuesBullets} icp={icp}
-      threeYear={threeYear} oneYear={oneYear} ninetyDay={ninetyDay}
-      parkingLot={parkingLot} focusOfYear={focusOfYear}
-      generatePDF={generatePDF}
-    />;
+    return (
+      <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Strategic Organizer</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{schoolName || "Your school's strategic plan"}</p>
+          </div>
+          <button onClick={generatePDF} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border hover:bg-accent transition-colors">
+            <Download className="w-3.5 h-3.5" /> Download PDF
+          </button>
+        </div>
+
+        <div className="space-y-0">
+          <div className="bg-blue-900 text-white px-8 py-8 rounded-t-lg">
+            <h1 className="text-3xl font-bold mb-1">{schoolName || "Strategic Plan"}</h1>
+            <p className="text-blue-200 text-xs">Academy Compass — Always know where your business is headed.</p>
+          </div>
+
+          <div className="bg-white border border-t-0">
+            <div className="bg-blue-900 text-white px-8 py-3 font-bold text-sm tracking-wider">FOUNDATION</div>
+            <div className="p-8 space-y-8">
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div>
+                    <p className="text-blue-700 font-semibold text-xs uppercase tracking-wide mb-2">Mission</p>
+                    <p className="text-gray-700 text-sm leading-relaxed">{mission || "N/A"}</p>
+                  </div>
+                  {valuesBullets.filter(v => v).length > 0 && (
+                    <div>
+                      <p className="text-blue-700 font-semibold text-xs uppercase tracking-wide mb-2">Core Values</p>
+                      <ul className="text-gray-700 text-sm space-y-1">{valuesBullets.filter(v => v).map((val, i) => <li key={i}>• {val}</li>)}</ul>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-6">
+                  <div>
+                    <p className="text-amber-700 font-semibold text-xs uppercase tracking-wide mb-2">BHAG (Big Hairy Audacious Goal)</p>
+                    <p className="text-gray-700 text-sm leading-relaxed">{bhag || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-blue-700 font-semibold text-xs uppercase tracking-wide mb-2">Ideal Customer Profile</p>
+                    <p className="text-gray-700 text-sm leading-relaxed">{icp || "N/A"}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-t-0">
+            <div className="bg-blue-900 text-white px-8 py-3 font-bold text-sm tracking-wider">VISION & GOALS</div>
+            <div className="p-8 space-y-8">
+              {[
+                { label: "3 Year Vision", data: threeYear, color: "text-blue-700" },
+                { label: "1 Year Goal", data: oneYear, color: "text-blue-700" },
+                { label: "90 Day Projects", data: ninetyDay, color: "text-orange-700" },
+              ].map(({ label, data, color }, idx, arr) => (
+                <div key={label} className={idx < arr.length - 1 ? "border-b pb-8" : ""}>
+                  <p className={`${color} font-semibold text-xs uppercase tracking-wide mb-4`}>{label}</p>
+                  <div className="grid grid-cols-4 gap-4 mb-4">
+                    {[["DUE", data?.target_date], ["REVENUE", data?.revenue_target], ["STUDENTS", data?.student_target], ["NET PROFIT", data?.net_profit_target]].map(([k, v]) => (
+                      <div key={k}><p className="text-gray-600 text-[11px] mb-1 font-semibold">{k}</p><p className="text-gray-900 font-bold text-sm">{v || "N/A"}</p></div>
+                    ))}
+                  </div>
+                  {data?.bullets?.filter(b => b).length > 0 && (
+                    <ul className="text-gray-700 text-sm space-y-1">{data.bullets.filter(b => b).map((b, i) => <li key={i}>• {b}</li>)}</ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white border border-t-0">
+            <div className="bg-green-800 text-white px-8 py-3 font-bold text-sm tracking-wider">CAPTURE</div>
+            <div className="p-8">
+              <div className="grid grid-cols-2 gap-8">
+                <div>
+                  <p className="text-green-700 font-semibold text-xs uppercase tracking-wide mb-3">The Parking Lot</p>
+                  {parkingLot.filter(p => p).length > 0
+                    ? <ul className="text-gray-700 text-sm space-y-1">{parkingLot.filter(p => p).map((item, i) => <li key={i}>• {item}</li>)}</ul>
+                    : <p className="text-gray-500 text-sm">N/A</p>}
+                </div>
+                <div>
+                  <p className="text-green-700 font-semibold text-xs uppercase tracking-wide mb-3">Focus of the Year</p>
+                  <p className="text-gray-700 text-sm leading-relaxed">{focusOfYear || "N/A"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-t-0 px-8 py-4 rounded-b-lg flex justify-between text-xs text-gray-500">
+            <span>Academy Compass — Strategic Organizer</span>
+            <span>Generated {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
