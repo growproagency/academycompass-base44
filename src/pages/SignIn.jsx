@@ -25,7 +25,7 @@ export default function SignIn() {
   }, [navigate]);
 
   const handleInviteFlow = async (session) => {
-    const inviteToken = sessionStorage.getItem('pending_invite_token');
+    const inviteToken = localStorage.getItem('pending_invite_token');
     if (!inviteToken) return false;
 
     // Look up the invite
