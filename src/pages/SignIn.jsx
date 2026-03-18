@@ -97,7 +97,7 @@ export default function SignIn() {
     // Preserve invite token across OAuth redirect
     const params = new URLSearchParams(window.location.search);
     const inviteToken = params.get('invite');
-    if (inviteToken) sessionStorage.setItem('pending_invite_token', inviteToken);
+    if (inviteToken) localStorage.setItem('pending_invite_token', inviteToken);
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
