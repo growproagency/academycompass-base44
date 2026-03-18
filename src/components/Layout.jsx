@@ -14,7 +14,6 @@ import {
   Shield,
   Menu,
   LogOut,
-  GraduationCap,
 } from "lucide-react";
 
 const menuItems = [

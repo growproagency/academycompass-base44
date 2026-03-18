@@ -519,14 +519,14 @@ export default function Dashboard() {
       {announcements.length > 0 && (
         <div style={{ background: "#ffffff", border: "1px solid #E2E8F0", borderRadius: 10, padding: "14px 18px", borderLeft: "4px solid #22C55E", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
           <div className="flex items-start gap-3">
-            <Pin className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#22C55E" }} />
+            <Pin className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#2AACE2" }} />
             <div className="flex-1 min-w-0">
               <p style={{ fontSize: 14, fontWeight: 600, color: "#1E293B" }}>{announcements[0].title}</p>
               {announcements[0].created_at && (
                 <p style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>{format(new Date(announcements[0].created_at), "MMM d, yyyy")}</p>
               )}
             </div>
-            <Link to="/Announcements" style={{ fontSize: 13, fontWeight: 600, color: "#22C55E", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 2 }}>
+            <Link to="/Announcements" style={{ fontSize: 13, fontWeight: 600, color: "#2AACE2", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 2 }}>
               View all <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -554,7 +554,7 @@ export default function Dashboard() {
                 padding: "7px 16px",
                 fontSize: 13,
                 fontWeight: 600,
-                background: view === value ? "#22C55E" : "#ffffff",
+                background: view === value ? "#2AACE2" : "#ffffff",
                 color: view === value ? "#ffffff" : "#64748B",
                 border: "none",
                 cursor: "pointer",
@@ -570,9 +570,9 @@ export default function Dashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total To-Dos", value: stats.totalTodos, icon: CheckSquare, color: "#22C55E" },
+          { label: "Total To-Dos", value: stats.totalTodos, icon: CheckSquare, color: "#2AACE2" },
           { label: "Overdue", value: stats.overdue, icon: AlertCircle, color: "#EF4444" },
-          { label: "Completed", value: stats.done, icon: TrendingUp, color: "#22C55E" },
+          { label: "Completed", value: stats.done, icon: TrendingUp, color: "#16A34A" },
           { label: "Rocks On Track", value: `${stats.rocksOnTrack}/${stats.totalRocks}`, icon: Mountain, color: "#F59E0B" },
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} style={{ background: "#ffffff", border: "1px solid #E2E8F0", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
@@ -605,9 +605,9 @@ export default function Dashboard() {
             </Select>
             <button
               className="ml-auto flex items-center gap-1.5 transition-colors"
-              style={{ background: "#22C55E", color: "#fff", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}
-              onMouseEnter={e => e.currentTarget.style.background = "#16A34A"}
-              onMouseLeave={e => e.currentTarget.style.background = "#22C55E"}
+              style={{ background: "#2AACE2", color: "#fff", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#1A8FBF"}
+              onMouseLeave={e => e.currentTarget.style.background = "#2AACE2"}
               onClick={() => { setEditingTask(null); setCreateStatus("todo"); setCreateOpen(true); }}
             >
               <Plus className="w-3.5 h-3.5" /> New To-Do
@@ -663,7 +663,7 @@ export default function Dashboard() {
                       <span>{progress}%</span>
                     </div>
                     <div style={{ background: "#E2E8F0", borderRadius: 3, height: 6, overflow: "hidden" }}>
-                      <div style={{ background: "#22C55E", width: `${progress}%`, height: "100%", borderRadius: 3 }} />
+                      <div style={{ background: "#2AACE2", width: `${progress}%`, height: "100%", borderRadius: 3 }} />
                     </div>
                   </div>
                   {rock.due_date && (
@@ -680,7 +680,7 @@ export default function Dashboard() {
               <Mountain className="w-8 h-8 mb-2" style={{ color: "#CBD5E1" }} />
               <p style={{ fontSize: 14, color: "#64748B" }}>No Rocks yet</p>
               <Link to="/Rocks">
-                <button className="mt-3 flex items-center gap-1.5" style={{ background: "#22C55E", color: "#fff", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}>
+                <button className="mt-3 flex items-center gap-1.5" style={{ background: "#2AACE2", color: "#fff", borderRadius: 8, padding: "7px 14px", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer" }}>
                   <Plus className="w-3.5 h-3.5" /> Create Rock
                 </button>
               </Link>
