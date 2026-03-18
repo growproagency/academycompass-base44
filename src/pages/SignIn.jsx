@@ -23,36 +23,26 @@ export default function SignIn() {
   const handleInviteFlow = async (session) => {
     const inviteToken = localStorage.getItem('pendingInviteToken');
     if (!inviteToken) return false;
+    localStorage.removeItem('pendingInviteToken');
 
     const now = new Date().toISOString();
     const { data: invite } = await supabase
       .from('invitations')
-      .select('*')
+      .select('id')
       .eq('token', inviteToken)
       .eq('status', 'pending')
-      .or(`expires_at.is.null,expires_at.gt.${now}`)
+      .gt('expires_at', now)
       .maybeSingle();
 
-    localStorage.removeItem('pendingInviteToken');
-
     if (!invite) {
-      navigate('/AccessPending?reason=no_profile');
+      navigate('/AccessPending');
       return true;
     }
 
-    await supabase.from('profiles').insert([{
-      auth_user_id: session.user.id,
-      email: session.user.email,
-      full_name: session.user.user_metadata?.full_name || session.user.email,
-      organization_id: invite.organization_id,
-      role: invite.role,
-      status: 'active',
-    }]);
-
-    await supabase.from('invitations').update({ status: 'accepted' }).eq('token', inviteToken);
+    // Wait for DB trigger to create profile
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     toast.success('Welcome! Your account has been set up.');
-    await supabase.auth.refreshSession();
     navigate('/Dashboard');
     return true;
   };
