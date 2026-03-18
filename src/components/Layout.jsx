@@ -210,11 +210,13 @@ export default function Layout() {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <img
-              src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/0d1ffa015_image.png"
-              alt="Grow Pro"
-              style={{ width: 24, height: 24, objectFit: "cover", objectPosition: "left center", mixBlendMode: "multiply" }}
-            />
+            <div style={{ width: 24, height: 24, overflow: "hidden", flexShrink: 0 }}>
+              <img
+                src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/3c5268561_GrowProAgencyLogo_Darkcopy.png"
+                alt="Grow Pro"
+                style={{ width: 87, height: 24, objectFit: "cover", objectPosition: "left center" }}
+              />
+            </div>
             <span className="font-bold text-sm" style={{ color: "#1E293B" }}>Academy Compass</span>
           </div>
         </header>
