@@ -25,31 +25,28 @@ export default function SignIn() {
   }, [navigate]);
 
   const handleInviteFlow = async (session) => {
-    const inviteToken = localStorage.getItem('pending_invite_token');
+    const inviteToken = localStorage.getItem('pendingInviteToken');
     if (!inviteToken) return false;
 
-    // Look up the invite
-    const { data: invite, error: inviteError } = await supabase
+    // Look up valid, non-expired pending invite
+    const now = new Date().toISOString();
+    const { data: invite } = await supabase
       .from('invitations')
       .select('*')
       .eq('token', inviteToken)
       .eq('status', 'pending')
+      .or(`expires_at.is.null,expires_at.gt.${now}`)
       .maybeSingle();
 
-    if (inviteError || !invite) {
-      localStorage.removeItem('pending_invite_token');
-      return false;
+    localStorage.removeItem('pendingInviteToken');
+
+    if (!invite) {
+      navigate('/AccessPending');
+      return true;
     }
 
-    // Check expiry if expires_at exists
-    if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
-      localStorage.removeItem('pending_invite_token');
-      toast.error('This invite link has expired.');
-      return false;
-    }
-
-    // Create profile
-    const { error: profileError } = await supabase.from('profiles').insert([{
+    // Insert new profile
+    await supabase.from('profiles').insert([{
       auth_user_id: session.user.id,
       email: session.user.email,
       full_name: session.user.user_metadata?.full_name || session.user.email,
@@ -58,17 +55,8 @@ export default function SignIn() {
       status: 'active',
     }]);
 
-    if (profileError) {
-      // Profile may already exist — try updating it instead
-      await supabase
-        .from('profiles')
-        .update({ organization_id: invite.organization_id, role: invite.role, status: 'active' })
-        .eq('auth_user_id', session.user.id);
-    }
-
     // Mark invite as accepted
     await supabase.from('invitations').update({ status: 'accepted' }).eq('token', inviteToken);
-    localStorage.removeItem('pending_invite_token');
 
     toast.success('Welcome! Your account has been set up.');
     navigate('/Dashboard');
@@ -76,9 +64,11 @@ export default function SignIn() {
   };
 
   const checkProfileAndRedirect = async (session) => {
-    // Try invite flow first
-    const handledByInvite = await handleInviteFlow(session);
-    if (handledByInvite) return;
+    // Try invite flow first if a token is stored
+    if (localStorage.getItem('pendingInviteToken')) {
+      await handleInviteFlow(session);
+      return;
+    }
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -94,10 +84,10 @@ export default function SignIn() {
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
-    // Preserve invite token across OAuth redirect
+    // Save invite token before OAuth redirect (localStorage persists across redirects)
     const params = new URLSearchParams(window.location.search);
     const inviteToken = params.get('invite');
-    if (inviteToken) localStorage.setItem('pending_invite_token', inviteToken);
+    if (inviteToken) localStorage.setItem('pendingInviteToken', inviteToken);
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
