@@ -59,6 +59,7 @@ export default function SignIn() {
     await supabase.from('invitations').update({ status: 'accepted' }).eq('token', inviteToken);
 
     toast.success('Welcome! Your account has been set up.');
+    await supabase.auth.refreshSession();
     navigate('/Dashboard');
     return true;
   };
