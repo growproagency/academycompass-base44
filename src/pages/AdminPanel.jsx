@@ -23,7 +23,7 @@ export default function AdminPanel() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
   const [inviting, setInviting] = useState(false);
-  const [generatedLink, setGeneratedLink] = useState("");
+  const [generatedLink, setGeneratedLink] = useState(null);
   const [copied, setCopied] = useState(false);
 
   const [removeTarget, setRemoveTarget] = useState(null); // user to confirm remove
