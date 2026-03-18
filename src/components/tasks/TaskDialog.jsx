@@ -62,7 +62,8 @@ export default function TaskDialog({
           status: defaultStatus || "todo",
           priority: "medium",
           rock_id: "",
-          assigned_to: "",
+          // Members are auto-assigned to themselves
+          assigned_to: !profile?.role || profile.role.toLowerCase() !== 'admin' ? (profile?.id || "") : "",
           due_date: "",
           repeat_frequency: "none",
           subtasks: [],
@@ -328,18 +329,20 @@ export default function TaskDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Assign To</Label>
-              <Select value={form.assigned_to || "none"} onValueChange={(v) => setForm({ ...form, assigned_to: v === "none" ? "" : v })}>
-                <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Unassigned</SelectItem>
-                  {users?.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {isAdmin && (
+              <div>
+                <Label>Assign To</Label>
+                <Select value={form.assigned_to || "none"} onValueChange={(v) => setForm({ ...form, assigned_to: v === "none" ? "" : v })}>
+                  <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Unassigned</SelectItem>
+                    {users?.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

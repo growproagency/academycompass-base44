@@ -55,12 +55,18 @@ export default function CalendarPage() {
     queryFn: async () => {
       if (!profile?.organization_id) return [];
 
-      // Fetch tasks with due dates
-      const { data: tasksData, error } = await supabase
+      // Fetch tasks with due dates — members only see their own
+      let query = supabase
         .from('tasks')
         .select('id, title, status, priority, due_date, assigned_to')
         .eq('organization_id', profile.organization_id)
         .not('due_date', 'is', null);
+
+      if (!isAdmin) {
+        query = query.eq('assigned_to', profile.id);
+      }
+
+      const { data: tasksData, error } = await query;
       if (error) {
         console.error('❌ Calendar: Tasks query error:', error);
         return [];

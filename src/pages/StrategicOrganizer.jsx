@@ -144,6 +144,7 @@ function parseJSON(val, fallback) {
 export default function StrategicOrganizer() {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const isAdmin = profile?.role?.toLowerCase() === 'admin';
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [planId, setPlanId] = useState(null);
@@ -293,6 +294,17 @@ export default function StrategicOrganizer() {
         <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
+  }
+
+  // Member read-only preview
+  if (!isAdmin) {
+    return <StrategicOrganizerMemberView
+      schoolName={schoolName} mission={mission} bhag={bhag}
+      valuesBullets={valuesBullets} icp={icp}
+      threeYear={threeYear} oneYear={oneYear} ninetyDay={ninetyDay}
+      parkingLot={parkingLot} focusOfYear={focusOfYear}
+      generatePDF={generatePDF}
+    />;
   }
 
   return (
