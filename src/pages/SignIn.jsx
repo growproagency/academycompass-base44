@@ -37,13 +37,13 @@ export default function SignIn() {
       .maybeSingle();
 
     if (inviteError || !invite) {
-      sessionStorage.removeItem('pending_invite_token');
+      localStorage.removeItem('pending_invite_token');
       return false;
     }
 
     // Check expiry if expires_at exists
     if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
-      sessionStorage.removeItem('pending_invite_token');
+      localStorage.removeItem('pending_invite_token');
       toast.error('This invite link has expired.');
       return false;
     }
