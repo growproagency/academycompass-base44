@@ -134,6 +134,91 @@ function VisionGoalSection({ title, icon: Icon, iconColor, data, onChange }) {
   );
 }
 
+// Member read-only view
+function StrategicOrganizerMemberView({ schoolName, mission, bhag, valuesBullets, icp, threeYear, oneYear, ninetyDay, parkingLot, focusOfYear, generatePDF }) {
+  const Section = ({ label, children }) => (
+    <div className="border border-border/50 rounded-xl p-5 bg-card space-y-2">
+      <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">{label}</h3>
+      {children}
+    </div>
+  );
+
+  const Field = ({ value, placeholder }) => (
+    <p className="text-sm text-foreground whitespace-pre-wrap">{value || <span className="text-muted-foreground italic">{placeholder || "—"}</span>}</p>
+  );
+
+  const VisionSection = ({ title, data }) => (
+    <div className="border border-border/50 rounded-xl p-5 bg-card space-y-3">
+      <h3 className="font-semibold text-sm text-foreground">{title}</h3>
+      {(data?.target_date || data?.revenue_target || data?.student_target || data?.net_profit_target) && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {data?.target_date && <div><p className="text-[10px] text-muted-foreground mb-0.5">Target Date</p><p className="text-xs font-medium">{data.target_date}</p></div>}
+          {data?.revenue_target && <div><p className="text-[10px] text-muted-foreground mb-0.5">Revenue</p><p className="text-xs font-medium">{data.revenue_target}</p></div>}
+          {data?.student_target && <div><p className="text-[10px] text-muted-foreground mb-0.5">Students</p><p className="text-xs font-medium">{data.student_target}</p></div>}
+          {data?.net_profit_target && <div><p className="text-[10px] text-muted-foreground mb-0.5">Net Profit</p><p className="text-xs font-medium">{data.net_profit_target}</p></div>}
+        </div>
+      )}
+      {data?.bullets?.filter(b => b).length > 0 && (
+        <ul className="space-y-1">
+          {data.bullets.filter(b => b).map((b, i) => (
+            <li key={i} className="text-sm flex gap-2"><span className="text-muted-foreground">•</span>{b}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="p-4 md:p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Strategic Organizer</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{schoolName || "Your school's strategic plan"}</p>
+        </div>
+        <button
+          onClick={generatePDF}
+          className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border hover:bg-accent transition-colors"
+        >
+          <Download className="w-3.5 h-3.5" /> Download PDF
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Foundation</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Section label="Mission"><Field value={mission} placeholder="Not set" /></Section>
+          <Section label="BHAG"><Field value={bhag} placeholder="Not set" /></Section>
+          <Section label="Values">
+            {valuesBullets?.filter(v => v).length > 0
+              ? <ul className="space-y-1">{valuesBullets.filter(v => v).map((v, i) => <li key={i} className="text-sm flex gap-2"><span className="text-muted-foreground">•</span>{v}</li>)}</ul>
+              : <p className="text-sm text-muted-foreground italic">Not set</p>}
+          </Section>
+          <Section label="Ideal Customer Profile"><Field value={icp} placeholder="Not set" /></Section>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Vision & Goals</p>
+        <VisionSection title="3 Year Vision" data={threeYear} />
+        <VisionSection title="1 Year Goal" data={oneYear} />
+        <VisionSection title="90 Day Projects" data={ninetyDay} />
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Capture</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Section label="The Parking Lot">
+            {parkingLot?.filter(v => v).length > 0
+              ? <ul className="space-y-1">{parkingLot.filter(v => v).map((v, i) => <li key={i} className="text-sm flex gap-2"><span className="text-muted-foreground">•</span>{v}</li>)}</ul>
+              : <p className="text-sm text-muted-foreground italic">Not set</p>}
+          </Section>
+          <Section label="Focus of the Year"><Field value={focusOfYear} placeholder="Not set" /></Section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Parse JSON safely
 function parseJSON(val, fallback) {
   if (!val) return fallback;
