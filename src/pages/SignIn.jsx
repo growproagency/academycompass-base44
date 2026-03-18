@@ -28,7 +28,7 @@ export default function SignIn() {
     const now = new Date().toISOString();
     const { data: invite } = await supabase
       .from('invitations')
-      .select('id')
+      .select('*')
       .eq('token', inviteToken)
       .eq('status', 'pending')
       .gt('expires_at', now)
@@ -39,8 +39,40 @@ export default function SignIn() {
       return true;
     }
 
-    // Wait for DB trigger to create profile
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Check if profile already exists
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('auth_user_id', session.user.id)
+      .maybeSingle();
+
+    if (existingProfile) {
+      // Update existing profile with invite org and role
+      await supabase
+        .from('profiles')
+        .update({
+          organization_id: invite.organization_id,
+          role: invite.role,
+          status: 'active'
+        })
+        .eq('auth_user_id', session.user.id);
+    } else {
+      // Insert new profile
+      await supabase.from('profiles').insert([{
+        auth_user_id: session.user.id,
+        email: session.user.email,
+        full_name: session.user.user_metadata?.full_name || session.user.email,
+        organization_id: invite.organization_id,
+        role: invite.role,
+        status: 'active',
+      }]);
+    }
+
+    // Mark invite as accepted
+    await supabase
+      .from('invitations')
+      .update({ status: 'accepted' })
+      .eq('token', inviteToken);
 
     toast.success('Welcome! Your account has been set up.');
     navigate('/Dashboard');
