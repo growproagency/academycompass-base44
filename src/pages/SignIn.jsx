@@ -109,7 +109,15 @@ export default function SignIn() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('oauth_callback')) {
       supabase.auth.getSession().then(async ({ data: { session } }) => {
-        if (session) await checkProfileAndRedirect(session);
+        if (!session) return;
+
+        const pendingToken = localStorage.getItem('pendingInviteToken');
+        if (pendingToken) {
+          await handleInviteFlow(session);
+          return;
+        }
+
+        await checkProfileAndRedirect(session);
       });
     }
   }, []);
