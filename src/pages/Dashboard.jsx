@@ -321,13 +321,18 @@ export default function Dashboard() {
     return statusTasks;
   };
 
+  const myTasks = useMemo(() => {
+    if (isAdmin) return tasks;
+    return tasks.filter(t => t.assigned_to === profile?.id);
+  }, [tasks, isAdmin, profile?.id]);
+
   const stats = useMemo(() => ({
-    totalTodos: tasks.length,
-    overdue: tasks.filter((t) => t.due_date && isPast(parseISO(t.due_date)) && t.status !== "done").length,
-    done: tasks.filter((t) => t.status === "done").length,
+    totalTodos: myTasks.length,
+    overdue: myTasks.filter((t) => t.due_date && isPast(parseISO(t.due_date)) && t.status !== "done").length,
+    done: myTasks.filter((t) => t.status === "done").length,
     rocksOnTrack: rocks.filter((r) => r.rock_status === "on_track" || r.rock_status === "complete").length,
     totalRocks: rocks.length,
-  }), [tasks, rocks]);
+  }), [myTasks, rocks]);
 
   const handleStatusChange = (task, newStatus) => {
     updateTask.mutate({ id: task.id, data: { status: newStatus } });
