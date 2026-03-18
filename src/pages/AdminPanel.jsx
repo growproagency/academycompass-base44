@@ -112,10 +112,12 @@ export default function AdminPanel() {
 
   const resetInviteModal = () => {
     setShowInviteModal(false);
-    setInviteEmail("");
-    setInviteRole("member");
-    setGeneratedLink("");
-    setCopied(false);
+    setTimeout(() => {
+      setInviteEmail("");
+      setInviteRole("member");
+      setGeneratedLink(null);
+      setCopied(false);
+    }, 200);
   };
 
   if (isLoadingAuth) {
