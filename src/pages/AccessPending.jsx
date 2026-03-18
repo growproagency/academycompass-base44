@@ -1,123 +1,116 @@
 import React from 'react';
-import { supabase } from '@/components/lib/supabaseClient';
-import { useAuth } from '@/components/lib/SupabaseAuthContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, AlertCircle, LogOut, XCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../components/lib/supabaseClient';
+
+const STATES = {
+  pending: {
+    icon: '⏳',
+    title: 'Access Pending',
+    description: 'Your account is awaiting approval. You\'ll be notified once an admin reviews your request.',
+    color: '#F59E0B',
+    bg: '#1c1500',
+    border: '#78350f',
+  },
+  no_profile: {
+    icon: '🔍',
+    title: 'Profile Not Found',
+    description: 'We couldn\'t find a profile linked to your account. Please contact your administrator to get access.',
+    color: '#94A3B8',
+    bg: '#0f172a',
+    border: '#1e293b',
+  },
+  no_org: {
+    icon: '🚫',
+    title: 'Access Not Authorized',
+    description: 'Your account is not linked to any organization. Please contact your administrator.',
+    color: '#EF4444',
+    bg: '#1c0000',
+    border: '#7f1d1d',
+  },
+};
 
 export default function AccessPending() {
-  const { profile, user, authError, signOut } = useAuth();
+  const navigate = useNavigate();
+  const params = new URLSearchParams(window.location.search);
+  const reason = params.get('reason') || 'pending';
+  const state = STATES[reason] || STATES.pending;
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      toast.error('Failed to sign out: ' + error.message);
-    }
+    await supabase.auth.signOut();
+    navigate('/SignIn');
   };
 
-  // Handle case where profile doesn't exist at all
-  if (!profile && user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
-        <Card className="w-full max-w-md shadow-lg">
-          <CardHeader className="space-y-3 text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-              <XCircle className="w-6 h-6 text-red-600" />
-            </div>
-            <CardTitle className="text-2xl">Profile Not Found</CardTitle>
-            <CardDescription>
-              No profile exists for your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-muted rounded-lg p-4 space-y-2 text-sm">
-              <p><strong>Email:</strong> {user?.email}</p>
-            </div>
-            
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p>Your account has been authenticated, but no profile was found in the system.</p>
-              <p>Please contact your administrator to set up your access.</p>
-            </div>
-
-            {authError && (
-              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
-                <p className="text-sm text-destructive">Error: {authError.message}</p>
-              </div>
-            )}
-
-            <Button 
-              onClick={handleSignOut} 
-              variant="outline" 
-              className="w-full"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const isPending = profile?.status === 'pending';
-  const isRejected = profile?.status === 'rejected';
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-3 text-center">
-          <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center ${
-            isPending ? 'bg-yellow-100' : 'bg-red-100'
-          }`}>
-            {isPending ? (
-              <Clock className="w-6 h-6 text-yellow-600" />
-            ) : (
-              <AlertCircle className="w-6 h-6 text-red-600" />
-            )}
-          </div>
-          <CardTitle className="text-2xl">
-            {isPending ? 'Access Pending' : 'Access Not Authorized'}
-          </CardTitle>
-          <CardDescription>
-            {isPending 
-              ? 'Your account is awaiting approval'
-              : 'Your access request was not approved'
-            }
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-muted rounded-lg p-4 space-y-2 text-sm">
-            <p><strong>Email:</strong> {user?.email}</p>
-            <p><strong>Status:</strong> {profile?.status || 'Unknown'}</p>
-          </div>
-          
-          <div className="text-sm text-muted-foreground space-y-2">
-            {isPending ? (
-              <>
-                <p>Your account has been created and is pending approval by an administrator.</p>
-                <p>You will receive an email notification once your account has been reviewed.</p>
-                <p className="text-xs mt-4">If you believe this is an error, please contact your organization administrator.</p>
-              </>
-            ) : (
-              <>
-                <p>Your access to Academy Compass has not been authorized.</p>
-                <p>Please contact your organization administrator for more information.</p>
-              </>
-            )}
-          </div>
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-4"
+      style={{ background: '#000000', fontFamily: "'Inter', system-ui, sans-serif" }}
+    >
+      <div
+        className="w-full flex flex-col items-center text-center"
+        style={{
+          maxWidth: 440,
+          background: '#141414',
+          borderRadius: 16,
+          boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
+          padding: '40px',
+          border: '1px solid #2a2a2a',
+        }}
+      >
+        {/* Logo */}
+        <img
+          src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/8eb22fe87_GrowProAgencyLogo_Darkcopy.png"
+          alt="Grow Pro Agency"
+          style={{ width: 160, height: 'auto', marginBottom: 28 }}
+        />
 
-          <Button 
-            onClick={handleSignOut} 
-            variant="outline" 
-            className="w-full"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
-        </CardContent>
-      </Card>
+        {/* Icon */}
+        <div
+          style={{
+            width: 64,
+            height: 64,
+            borderRadius: '50%',
+            background: state.bg,
+            border: `1px solid ${state.border}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 28,
+            marginBottom: 20,
+          }}
+        >
+          {state.icon}
+        </div>
+
+        {/* Title */}
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#ffffff', marginBottom: 10 }}>
+          {state.title}
+        </h1>
+
+        {/* Description */}
+        <p style={{ fontSize: 14, color: '#94A3B8', lineHeight: 1.6, marginBottom: 28 }}>
+          {state.description}
+        </p>
+
+        {/* Sign out button */}
+        <button
+          onClick={handleSignOut}
+          style={{
+            height: 40,
+            borderRadius: 8,
+            border: '1px solid #333333',
+            background: '#1f1f1f',
+            color: '#94A3B8',
+            fontSize: 14,
+            fontWeight: 500,
+            cursor: 'pointer',
+            padding: '0 20px',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#555'; e.currentTarget.style.color = '#fff'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#333333'; e.currentTarget.style.color = '#94A3B8'; }}
+        >
+          Sign out
+        </button>
+      </div>
     </div>
   );
 }

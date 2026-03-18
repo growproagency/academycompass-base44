@@ -26,8 +26,6 @@ export default function SignIn() {
 
   const handleInviteFlow = async (session) => {
     const inviteToken = localStorage.getItem('pendingInviteToken');
-    console.log('=== DEBUG handleInviteFlow ===');
-    console.log('inviteToken:', inviteToken);
     if (!inviteToken) return false;
 
     // Look up valid, non-expired pending invite
@@ -39,11 +37,11 @@ export default function SignIn() {
       .eq('status', 'pending')
       .or(`expires_at.is.null,expires_at.gt.${now}`)
       .maybeSingle();
-console.log('Invite lookup result:', invite);
+
     localStorage.removeItem('pendingInviteToken');
 
     if (!invite) {
-      navigate('/AccessPending');
+      navigate('/AccessPending?reason=no_profile');
       return true;
     }
 
@@ -66,29 +64,27 @@ console.log('Invite lookup result:', invite);
   };
 
   const checkProfileAndRedirect = async (session) => {
-    // DEBUG
-    console.log('=== DEBUG checkProfileAndRedirect ===');
-    console.log('pendingInviteToken in localStorage:', localStorage.getItem('pendingInviteToken'));
-    console.log('session user email:', session.user.email);
-    console.log('session user id:', session.user.id);
-
     // Try invite flow first if a token is stored
     if (localStorage.getItem('pendingInviteToken')) {
-      console.log('Token found! Running handleInviteFlow...');
       await handleInviteFlow(session);
       return;
     }
-    console.log('No token found, checking profile directly...');
 
     const { data: profile } = await supabase
       .from('profiles')
       .select('status, organization_id')
       .eq('auth_user_id', session.user.id)
       .maybeSingle();
-    if (!profile || !profile.organization_id || (profile.status !== 'approved' && profile.status !== 'active')) {
-      navigate('/AccessPending');
-    } else {
+
+    if (!profile) {
+      navigate('/AccessPending?reason=no_profile');
+    } else if (profile.status === 'active' && profile.organization_id) {
       navigate('/Dashboard');
+    } else if (profile.status === 'pending') {
+      navigate('/AccessPending?reason=pending');
+    } else {
+      // active but no org_id, or any other unexpected state
+      navigate('/AccessPending?reason=no_org');
     }
   };
 
