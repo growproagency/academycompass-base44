@@ -212,9 +212,15 @@ export default function Layout() {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "#22C55E" }}>
-              <GraduationCap className="w-3.5 h-3.5 text-white" />
-            </div>
+            <svg width="22" height="22" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="5" y="45" width="14" height="55" rx="3" fill="#2AACE2"/>
+              <rect x="23" y="25" width="14" height="75" rx="3" fill="#2AACE2"/>
+              <rect x="41" y="55" width="14" height="45" rx="3" fill="#2AACE2"/>
+              <rect x="59" y="35" width="14" height="65" rx="3" fill="#2AACE2"/>
+              <rect x="77" y="65" width="14" height="35" rx="3" fill="#2AACE2"/>
+              <polyline points="5,85 35,45 65,60 95,20" stroke="white" strokeWidth="8" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+              <polygon points="95,20 80,22 88,34" fill="white"/>
+            </svg>
             <span className="font-bold text-sm" style={{ color: "#1E293B" }}>Academy Compass</span>
           </div>
         </header>
