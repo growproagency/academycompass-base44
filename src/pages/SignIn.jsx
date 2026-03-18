@@ -26,6 +26,8 @@ export default function SignIn() {
 
   const handleInviteFlow = async (session) => {
     const inviteToken = localStorage.getItem('pendingInviteToken');
+    console.log('=== DEBUG handleInviteFlow ===');
+    console.log('inviteToken:', inviteToken);
     if (!inviteToken) return false;
 
     // Look up valid, non-expired pending invite
@@ -37,7 +39,7 @@ export default function SignIn() {
       .eq('status', 'pending')
       .or(`expires_at.is.null,expires_at.gt.${now}`)
       .maybeSingle();
-
+console.log('Invite lookup result:', invite);
     localStorage.removeItem('pendingInviteToken');
 
     if (!invite) {
@@ -64,11 +66,19 @@ export default function SignIn() {
   };
 
   const checkProfileAndRedirect = async (session) => {
+    // DEBUG
+    console.log('=== DEBUG checkProfileAndRedirect ===');
+    console.log('pendingInviteToken in localStorage:', localStorage.getItem('pendingInviteToken'));
+    console.log('session user email:', session.user.email);
+    console.log('session user id:', session.user.id);
+
     // Try invite flow first if a token is stored
     if (localStorage.getItem('pendingInviteToken')) {
+      console.log('Token found! Running handleInviteFlow...');
       await handleInviteFlow(session);
       return;
     }
+    console.log('No token found, checking profile directly...');
 
     const { data: profile } = await supabase
       .from('profiles')
