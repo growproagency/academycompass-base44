@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../components/lib/supabaseClient';
-import { GraduationCap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -25,7 +24,6 @@ export default function SignIn() {
     const inviteToken = localStorage.getItem('pendingInviteToken');
     if (!inviteToken) return false;
 
-    // Look up valid, non-expired pending invite
     const now = new Date().toISOString();
     const { data: invite } = await supabase
       .from('invitations')
@@ -42,7 +40,6 @@ export default function SignIn() {
       return true;
     }
 
-    // Insert new profile
     await supabase.from('profiles').insert([{
       auth_user_id: session.user.id,
       email: session.user.email,
@@ -52,7 +49,6 @@ export default function SignIn() {
       status: 'active',
     }]);
 
-    // Mark invite as accepted
     await supabase.from('invitations').update({ status: 'accepted' }).eq('token', inviteToken);
 
     toast.success('Welcome! Your account has been set up.');
@@ -62,35 +58,36 @@ export default function SignIn() {
   };
 
   const checkProfileAndRedirect = async (session) => {
-    // Try invite flow first if a token is stored
-    if (localStorage.getItem('pendingInviteToken')) {
-      await handleInviteFlow(session);
-      return;
+    // Try up to 3 times with 1 second delay
+    let profile = null;
+    for (let i = 0; i < 3; i++) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('status, organization_id')
+        .eq('auth_user_id', session.user.id)
+        .maybeSingle();
+
+      if (data?.organization_id && (data?.status === 'active' || data?.status === 'approved')) {
+        navigate('/Dashboard');
+        return;
+      }
+
+      profile = data;
+      if (i < 2) await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('status, organization_id')
-      .eq('auth_user_id', session.user.id)
-      .maybeSingle();
-
-    console.log('Profile fetched:', JSON.stringify(profile));
-
-    if (!profile) {
+    // After 3 attempts, redirect based on what we found
+    if (!profile || !profile.organization_id) {
       navigate('/AccessPending?reason=no_profile');
-    } else if (profile.status === 'active' && profile.organization_id) {
-      navigate('/Dashboard');
-    } else if (profile.status === 'pending') {
+    } else if (profile.status !== 'active' && profile.status !== 'approved') {
       navigate('/AccessPending?reason=pending');
     } else {
-      // active but no org_id, or any other unexpected state
-      navigate('/AccessPending?reason=no_org');
+      navigate('/Dashboard');
     }
   };
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
-    // Save invite token before OAuth redirect (localStorage persists across redirects)
     const params = new URLSearchParams(window.location.search);
     const inviteToken = params.get('invite');
     if (inviteToken) localStorage.setItem('pendingInviteToken', inviteToken);
@@ -127,7 +124,6 @@ export default function SignIn() {
       className="min-h-screen flex flex-col items-center justify-center p-4"
       style={{ background: "#000000", fontFamily: "'Inter', system-ui, sans-serif" }}
     >
-      {/* Card */}
       <div
         className="w-full flex flex-col items-center"
         style={{
@@ -139,14 +135,12 @@ export default function SignIn() {
           border: "1px solid #2a2a2a",
         }}
       >
-        {/* Logo */}
         <img
           src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/8eb22fe87_GrowProAgencyLogo_Darkcopy.png"
           alt="Grow Pro Agency"
           style={{ width: 180, height: "auto", display: "block", margin: "-8px auto -8px" }}
         />
 
-        {/* Title */}
         <h1 style={{ fontSize: 28, fontWeight: 700, color: "#ffffff", marginTop: 0, marginBottom: 6, paddingTop: 0, lineHeight: 1.2, textAlign: "center" }}>
           Welcome Back
         </h1>
@@ -154,7 +148,6 @@ export default function SignIn() {
           Sign in to Academy Compass
         </p>
 
-        {/* Session expired message */}
         {message && (
           <div
             className="w-full mb-4 p-3 rounded-lg text-sm"
@@ -164,7 +157,6 @@ export default function SignIn() {
           </div>
         )}
 
-        {/* Google Button */}
         <button
           onClick={handleGoogleLogin}
           disabled={isLoading}
@@ -192,8 +184,6 @@ export default function SignIn() {
           {isLoading ? "Signing in..." : "Continue with Google"}
         </button>
       </div>
-
-
     </div>
   );
 }
