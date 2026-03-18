@@ -83,7 +83,7 @@ export default function OnboardClient() {
             type="text"
             value={form.orgName}
             onChange={(e) => setForm({ ...form, orgName: e.target.value })}
-            placeholder="Acme School"
+            placeholder="School Name / Dojo"
             className="w-full bg-gray-800 border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500"
           />
         </div>
