@@ -264,7 +264,7 @@ export default function AdminPanel() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={resetInviteModal}>Close</Button>
-            {!generatedLink !== null && !generatedLink && (
+            {!generatedLink && (
               <Button onClick={handleSendInvite} disabled={inviting}>
                 {inviting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Send Invite
