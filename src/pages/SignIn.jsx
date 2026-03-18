@@ -19,10 +19,7 @@ export default function SignIn() {
         setMessage('Your session expired. Please sign in again.');
       }
     }
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session && !new URLSearchParams(window.location.search).get('oauth_callback')) navigate('/Dashboard');
-    });
-  }, [navigate]);
+  }, []);
 
   const handleInviteFlow = async (session) => {
     const inviteToken = localStorage.getItem('pendingInviteToken');
