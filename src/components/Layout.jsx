@@ -126,7 +126,7 @@ export default function Layout() {
               <img
                 src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/3c5268561_GrowProAgencyLogo_Darkcopy.png"
                 alt="Grow Pro"
-                style={{ width: 130, height: 36, objectFit: "cover", objectPosition: "left center", mixBlendMode: "screen" }}
+                style={{ width: 200, height: 140, objectFit: "cover", objectPosition: "14% 46%", mixBlendMode: "screen", marginTop: -52, marginLeft: -2 }}
               />
             </div>
             <span className="font-bold text-white text-[15px] tracking-tight leading-tight">
@@ -214,7 +214,7 @@ export default function Layout() {
               <img
                 src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/3c5268561_GrowProAgencyLogo_Darkcopy.png"
                 alt="Grow Pro"
-                style={{ width: 87, height: 24, objectFit: "cover", objectPosition: "left center" }}
+                style={{ width: 133, height: 93, objectFit: "cover", objectPosition: "14% 46%", marginTop: -34, marginLeft: -2 }}
               />
             </div>
             <span className="font-bold text-sm" style={{ color: "#1E293B" }}>Academy Compass</span>
