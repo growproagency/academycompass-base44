@@ -126,7 +126,7 @@ export default function Layout() {
               <img
                 src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/3c5268561_GrowProAgencyLogo_Darkcopy.png"
                 alt="Grow Pro"
-                style={{ width: 200, height: 140, objectFit: "cover", objectPosition: "8% 46%", mixBlendMode: "screen", marginTop: -52, marginLeft: -2 }}
+                style={{ width: 260, height: 180, objectFit: "cover", objectPosition: "left center", mixBlendMode: "screen", marginTop: -72, marginLeft: -18 }}
               />
             </div>
             <span className="font-bold text-white text-[15px] tracking-tight leading-tight">
