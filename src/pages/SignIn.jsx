@@ -68,7 +68,7 @@ export default function SignIn() {
 
     // Mark invite as accepted
     await supabase.from('invitations').update({ status: 'accepted' }).eq('token', inviteToken);
-    sessionStorage.removeItem('pending_invite_token');
+    localStorage.removeItem('pending_invite_token');
 
     toast.success('Welcome! Your account has been set up.');
     navigate('/Dashboard');
