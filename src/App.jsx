@@ -41,6 +41,7 @@ const AppRoutes = () => {
         <Route path="/StrategicOrganizerPreview" element={<StrategicOrganizerPreview />} />
         <Route path="/AdminPanel" element={<ProtectedRoute requireAdmin={true}><AdminPanel /></ProtectedRoute>} />
       </Route>
+      <Route path="/super-admin" element={<SuperAdmin />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
