@@ -125,7 +125,7 @@ export default function Layout() {
             <img
               src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/0d1ffa015_image.png"
               alt="Grow Pro"
-              style={{ width: 36, height: 36, objectFit: "contain" }}
+              style={{ width: 36, height: 36, objectFit: "contain", mixBlendMode: "screen" }}
             />
             <span className="font-bold text-white text-[15px] tracking-tight leading-tight">
               Academy Compass
@@ -211,7 +211,7 @@ export default function Layout() {
             <img
               src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/0d1ffa015_image.png"
               alt="Grow Pro"
-              style={{ width: 24, height: 24, objectFit: "contain" }}
+              style={{ width: 24, height: 24, objectFit: "contain", mixBlendMode: "multiply" }}
             />
             <span className="font-bold text-sm" style={{ color: "#1E293B" }}>Academy Compass</span>
           </div>
