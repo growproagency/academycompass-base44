@@ -24,11 +24,66 @@ export default function SignIn() {
     });
   }, [navigate]);
 
-  const checkProfileAndRedirect = async (userId) => {
+  const handleInviteFlow = async (session) => {
+    const inviteToken = sessionStorage.getItem('pending_invite_token');
+    if (!inviteToken) return false;
+
+    // Look up the invite
+    const { data: invite, error: inviteError } = await supabase
+      .from('invitations')
+      .select('*')
+      .eq('token', inviteToken)
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    if (inviteError || !invite) {
+      sessionStorage.removeItem('pending_invite_token');
+      return false;
+    }
+
+    // Check expiry if expires_at exists
+    if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
+      sessionStorage.removeItem('pending_invite_token');
+      toast.error('This invite link has expired.');
+      return false;
+    }
+
+    // Create profile
+    const { error: profileError } = await supabase.from('profiles').insert([{
+      auth_user_id: session.user.id,
+      email: session.user.email,
+      full_name: session.user.user_metadata?.full_name || session.user.email,
+      organization_id: invite.organization_id,
+      role: invite.role,
+      status: 'active',
+    }]);
+
+    if (profileError) {
+      // Profile may already exist — try updating it instead
+      await supabase
+        .from('profiles')
+        .update({ organization_id: invite.organization_id, role: invite.role, status: 'active' })
+        .eq('auth_user_id', session.user.id);
+    }
+
+    // Mark invite as accepted
+    await supabase.from('invitations').update({ status: 'accepted' }).eq('token', inviteToken);
+    sessionStorage.removeItem('pending_invite_token');
+
+    toast.success('Welcome! Your account has been set up.');
+    navigate('/Dashboard');
+    return true;
+  };
+
+  const checkProfileAndRedirect = async (session) => {
+    // Try invite flow first
+    const handledByInvite = await handleInviteFlow(session);
+    if (handledByInvite) return;
+
     const { data: profile } = await supabase
       .from('profiles')
       .select('status, organization_id')
-      .eq('auth_user_id', userId)
+      .eq('auth_user_id', session.user.id)
       .maybeSingle();
     if (!profile || !profile.organization_id || (profile.status !== 'approved' && profile.status !== 'active')) {
       navigate('/AccessPending');
@@ -39,6 +94,11 @@ export default function SignIn() {
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
+    // Preserve invite token across OAuth redirect
+    const params = new URLSearchParams(window.location.search);
+    const inviteToken = params.get('invite');
+    if (inviteToken) sessionStorage.setItem('pending_invite_token', inviteToken);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin + '/SignIn?oauth_callback=1' },
@@ -53,7 +113,7 @@ export default function SignIn() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('oauth_callback')) {
       supabase.auth.getSession().then(async ({ data: { session } }) => {
-        if (session) await checkProfileAndRedirect(session.user.id);
+        if (session) await checkProfileAndRedirect(session);
       });
     }
   }, []);
