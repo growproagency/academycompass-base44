@@ -76,6 +76,8 @@ export default function SignIn() {
       .eq('auth_user_id', session.user.id)
       .maybeSingle();
 
+    console.log('Profile fetched:', JSON.stringify(profile));
+
     if (!profile) {
       navigate('/AccessPending?reason=no_profile');
     } else if (profile.status === 'active' && profile.organization_id) {
