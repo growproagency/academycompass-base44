@@ -333,17 +333,22 @@ export default function CalendarPage() {
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     {events.tasks.slice(0, 3).map((t) => {
-                      const overdue = t.status !== 'done' && isPast(parseISO(t.due_date));
-                      const chip = STATUS_CHIP[t.status] || STATUS_CHIP.todo;
-                      return (
-                        <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                          <div style={{ width: 5, height: 5, borderRadius: "50%", background: PRIORITY_DOT_COLOR[t.priority], flexShrink: 0 }} />
-                          <span style={{ fontSize: 9, fontWeight: 600, background: chip.bg, color: overdue ? "#EF4444" : chip.color, borderRadius: 3, padding: "1px 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
-                            {t.status === 'done' ? 'Done' : t.status === 'in_progress' ? 'In Prog' : 'To Do'}
-                          </span>
-                          {isAdmin && t.assignee_name && <span style={{ fontSize: 8, color: "#94A3B8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.assignee_name}</span>}
-                        </div>
-                      );
+                    const overdue = t.status !== 'done' && isPast(parseISO(t.due_date));
+                    const chip = STATUS_CHIP[t.status] || STATUS_CHIP.todo;
+                    return (
+                    <div key={t.id} style={{ display: "flex", flexDirection: "column", gap: 1, marginBottom: 2 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <div style={{ width: 5, height: 5, borderRadius: "50%", background: PRIORITY_DOT_COLOR[t.priority], flexShrink: 0 }} />
+                        <span style={{ fontSize: 9, fontWeight: 600, color: overdue ? "#EF4444" : "#1E293B", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>{t.title}</span>
+                      </div>
+                      <div style={{ paddingLeft: 7, display: "flex", alignItems: "center", gap: 3 }}>
+                        <span style={{ fontSize: 8, fontWeight: 600, background: chip.bg, color: overdue ? "#EF4444" : chip.color, borderRadius: 3, padding: "1px 4px" }}>
+                          {t.status === 'done' ? 'Done' : t.status === 'in_progress' ? 'In Prog' : 'To Do'}
+                        </span>
+                        {isAdmin && t.assignee_name && <span style={{ fontSize: 8, color: "#94A3B8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.assignee_name}</span>}
+                      </div>
+                    </div>
+                    );
                     })}
                     {events.tasks.length > 3 && (
                       <span style={{ fontSize: 9, color: "#94A3B8" }}>+{events.tasks.length - 3} more</span>
