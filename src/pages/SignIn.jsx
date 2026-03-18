@@ -20,7 +20,7 @@ export default function SignIn() {
       }
     }
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate('/Dashboard');
+      if (session && !new URLSearchParams(window.location.search).get('oauth_callback')) navigate('/Dashboard');
     });
   }, [navigate]);
 
