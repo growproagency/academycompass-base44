@@ -122,11 +122,11 @@ export default function Layout() {
         {/* Logo */}
         <div className="flex flex-col px-5 pt-6 pb-4 shrink-0">
           <div className="flex items-center gap-3 mb-1">
-            <div style={{ width: 36, height: 36, overflow: "hidden", flexShrink: 0 }}>
+            <div style={{ width: 44, height: 44, overflow: "hidden", flexShrink: 0 }}>
               <img
                 src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/3c5268561_GrowProAgencyLogo_Darkcopy.png"
                 alt="Grow Pro"
-                style={{ width: 260, height: 180, objectFit: "cover", objectPosition: "left center", mixBlendMode: "screen", marginTop: -72, marginLeft: -18 }}
+                style={{ width: 220, height: 154, objectFit: "cover", objectPosition: "left center", mixBlendMode: "screen", marginTop: -55, marginLeft: -8 }}
               />
             </div>
             <span className="font-bold text-white text-[15px] tracking-tight leading-tight">
