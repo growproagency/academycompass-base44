@@ -249,7 +249,7 @@ export default function AdminPanel() {
               </Select>
             </div>
 
-            {generatedLink && (
+            {generatedLink !== null && generatedLink !== "" && (
               <div className="space-y-1.5">
                 <Label>Invite Link</Label>
                 <div className="flex items-center gap-2">
