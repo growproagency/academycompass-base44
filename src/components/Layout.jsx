@@ -122,11 +122,13 @@ export default function Layout() {
         {/* Logo */}
         <div className="flex flex-col px-5 pt-6 pb-4 shrink-0">
           <div className="flex items-center gap-3 mb-1">
-            <img
-              src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/0d1ffa015_image.png"
-              alt="Grow Pro"
-              style={{ width: 36, height: 36, objectFit: "contain", mixBlendMode: "screen" }}
-            />
+            <div style={{ width: 36, height: 36, overflow: "hidden", flexShrink: 0 }}>
+              <img
+                src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/3c5268561_GrowProAgencyLogo_Darkcopy.png"
+                alt="Grow Pro"
+                style={{ width: 130, height: 36, objectFit: "cover", objectPosition: "left center", mixBlendMode: "screen" }}
+              />
+            </div>
             <span className="font-bold text-white text-[15px] tracking-tight leading-tight">
               Academy Compass
             </span>
@@ -211,7 +213,7 @@ export default function Layout() {
             <img
               src="https://media.base44.com/images/public/69b2f65ec8ee0dde1fce1074/0d1ffa015_image.png"
               alt="Grow Pro"
-              style={{ width: 24, height: 24, objectFit: "contain", mixBlendMode: "multiply" }}
+              style={{ width: 24, height: 24, objectFit: "cover", objectPosition: "left center", mixBlendMode: "multiply" }}
             />
             <span className="font-bold text-sm" style={{ color: "#1E293B" }}>Academy Compass</span>
           </div>
