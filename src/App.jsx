@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
+
 import { AuthProvider } from './components/lib/SupabaseAuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
