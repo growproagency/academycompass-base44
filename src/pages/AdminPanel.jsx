@@ -84,7 +84,7 @@ export default function AdminPanel() {
       return;
     }
 
-    const link = `https://aios-academy-compass.base44.app/SignIn?invite=${token}`;
+    const link = `${window.location.origin}/SignIn?invite=${token}`;
     setGeneratedLink(link);
     setInviting(false);
     toast.success("Invite created!");
