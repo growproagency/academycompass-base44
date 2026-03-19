@@ -22,8 +22,6 @@ export default function SignIn() {
 
   const handleInviteFlow = async (session) => {
     const inviteToken = localStorage.getItem('pendingInviteToken');
-    console.log('=== handleInviteFlow ===');
-    console.log('inviteToken:', inviteToken);
     if (!inviteToken) return false;
     localStorage.removeItem('pendingInviteToken');
 
