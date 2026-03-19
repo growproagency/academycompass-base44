@@ -55,7 +55,6 @@ export default function SignIn() {
           status: 'active'
         })
         .eq('auth_user_id', session.user.id);
-      console.log('updateError:', updateError);
     } else {
       const { error: insertError } = await supabase.from('profiles').insert([{
         auth_user_id: session.user.id,
