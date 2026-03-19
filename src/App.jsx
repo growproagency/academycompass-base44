@@ -42,7 +42,7 @@ const AppRoutes = () => {
         <Route path="/AdminPanel" element={<ProtectedRoute requireAdmin={true}><AdminPanel /></ProtectedRoute>} />
       </Route>
       <Route path="/super-admin" element={<SuperAdmin />} />
-      <Route path="*" element={<Navigate to="/SignIn" replace />} />
+      <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
 };
