@@ -25,7 +25,7 @@ export default function SuperAdmin() {
 
   useEffect(() => {
     if (isLoadingAuth) return;
-    if (!authUser) { navigate("/"); return; }
+    if (!authUser) { navigate("/SignIn"); return; }
 
     const checkSuperAdmin = async () => {
       const { data, error } = await supabase
@@ -33,7 +33,7 @@ export default function SuperAdmin() {
         .select("email")
         .eq("email", authUser.email)
         .maybeSingle();
-      if (error || !data) { navigate("/"); return; }
+      if (error || !data) { navigate("/Dashboard"); return; }
       setIsSuperAdmin(true);
     };
     checkSuperAdmin();
