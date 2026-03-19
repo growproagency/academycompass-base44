@@ -34,9 +34,6 @@ export default function SignIn() {
       .gt('expires_at', now)
       .maybeSingle();
 
-    console.log('invite:', invite);
-    console.log('inviteError:', inviteError);
-
     if (!invite) {
       console.log('No invite found, redirecting to AccessPending');
       navigate('/AccessPending');
