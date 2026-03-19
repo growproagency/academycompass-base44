@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/components/lib/supabaseClient";
-import { useAuth } from "@/components/lib/SupabaseAuthContext";
 import { Loader2, Building2, Users, UserPlus, Mail, AlertTriangle, LogOut } from "lucide-react";
 import OrganizationsTable from "@/components/superadmin/OrganizationsTable";
 import UsersTable from "@/components/superadmin/UsersTable";
@@ -18,28 +17,56 @@ const TABS = [
 ];
 
 export default function SuperAdmin() {
-  const { user: authUser, isLoadingAuth } = useAuth();
   const navigate = useNavigate();
   const [isSuperAdmin, setIsSuperAdmin] = useState(null);
   const [activeTab, setActiveTab] = useState("orgs");
+  const [userEmail, setUserEmail] = useState(null);
 
   useEffect(() => {
-    if (isLoadingAuth) return;
-    if (!authUser) { navigate("/SignIn"); return; }
-
     const checkSuperAdmin = async () => {
-      const { data, error } = await supabase
-        .from("super_admins")
-        .select("email")
-        .eq("email", authUser.email)
-        .maybeSingle();
-      if (error || !data) { navigate("/Dashboard"); return; }
-      setIsSuperAdmin(true);
-    };
-    checkSuperAdmin();
-  }, [authUser, isLoadingAuth, navigate]);
+      try {
+        // Get fresh session directly from Supabase
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          console.log('No session found, redirecting to SignIn');
+          navigate("/SignIn");
+          return;
+        }
 
-  if (isLoadingAuth || isSuperAdmin === null) {
+        setUserEmail(session.user.email);
+
+        const { data, error } = await supabase
+          .from("super_admins")
+          .select("email")
+          .eq("email", session.user.email)
+          .maybeSingle();
+
+        console.log('Super admin check:', { data, error, email: session.user.email });
+
+        if (error) {
+          console.error('Super admin query error:', error);
+          navigate("/Dashboard");
+          return;
+        }
+
+        if (!data) {
+          console.log('Not a super admin, redirecting to Dashboard');
+          navigate("/Dashboard");
+          return;
+        }
+
+        setIsSuperAdmin(true);
+      } catch (err) {
+        console.error('Super admin check failed:', err);
+        navigate("/Dashboard");
+      }
+    };
+
+    checkSuperAdmin();
+  }, []);
+
+  if (isSuperAdmin === null) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
@@ -53,7 +80,7 @@ export default function SuperAdmin() {
       <div className="border-b border-white/10 bg-gray-900 px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-white">Super Admin Dashboard</h1>
-          <p className="text-xs text-gray-400 mt-0.5">{authUser?.email}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{userEmail}</p>
         </div>
         <button
           onClick={async () => { await supabase.auth.signOut(); navigate("/SignIn"); }}
