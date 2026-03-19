@@ -22,11 +22,13 @@ export default function SignIn() {
 
   const handleInviteFlow = async (session) => {
     const inviteToken = localStorage.getItem('pendingInviteToken');
+    console.log('=== handleInviteFlow ===');
+    console.log('inviteToken:', inviteToken);
     if (!inviteToken) return false;
     localStorage.removeItem('pendingInviteToken');
 
     const now = new Date().toISOString();
-    const { data: invite } = await supabase
+    const { data: invite, error: inviteError } = await supabase
       .from('invitations')
       .select('*')
       .eq('token', inviteToken)
@@ -34,21 +36,26 @@ export default function SignIn() {
       .gt('expires_at', now)
       .maybeSingle();
 
+    console.log('invite:', invite);
+    console.log('inviteError:', inviteError);
+
     if (!invite) {
+      console.log('No invite found, redirecting to AccessPending');
       navigate('/AccessPending');
       return true;
     }
 
-    // Check if profile already exists
-    const { data: existingProfile } = await supabase
+    const { data: existingProfile, error: profileError } = await supabase
       .from('profiles')
       .select('id')
       .eq('auth_user_id', session.user.id)
       .maybeSingle();
 
+    console.log('existingProfile:', existingProfile);
+    console.log('profileError:', profileError);
+
     if (existingProfile) {
-      // Update existing profile with invite org and role
-      await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({
           organization_id: invite.organization_id,
@@ -56,9 +63,9 @@ export default function SignIn() {
           status: 'active'
         })
         .eq('auth_user_id', session.user.id);
+      console.log('updateError:', updateError);
     } else {
-      // Insert new profile
-      await supabase.from('profiles').insert([{
+      const { error: insertError } = await supabase.from('profiles').insert([{
         auth_user_id: session.user.id,
         email: session.user.email,
         full_name: session.user.user_metadata?.full_name || session.user.email,
@@ -66,9 +73,9 @@ export default function SignIn() {
         role: invite.role,
         status: 'active',
       }]);
+      console.log('insertError:', insertError);
     }
 
-    // Mark invite as accepted
     await supabase
       .from('invitations')
       .update({ status: 'accepted' })
