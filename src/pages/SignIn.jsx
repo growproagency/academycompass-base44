@@ -46,9 +46,6 @@ export default function SignIn() {
       .eq('auth_user_id', session.user.id)
       .maybeSingle();
 
-    console.log('existingProfile:', existingProfile);
-    console.log('profileError:', profileError);
-
     if (existingProfile) {
       const { error: updateError } = await supabase
         .from('profiles')
