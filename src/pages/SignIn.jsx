@@ -35,7 +35,6 @@ export default function SignIn() {
       .maybeSingle();
 
     if (!invite) {
-      console.log('No invite found, redirecting to AccessPending');
       navigate('/AccessPending');
       return true;
     }
