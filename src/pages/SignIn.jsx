@@ -60,12 +60,11 @@ export default function SignIn() {
         auth_user_id: session.user.id,
         email: session.user.email,
         full_name: session.user.user_metadata?.full_name || session.user.email,
-        organization_id: invite.organization_id,
-        role: invite.role,
-        status: 'active',
-      }]);
-      console.log('insertError:', insertError);
-    }
+          organization_id: invite.organization_id,
+          role: invite.role,
+          status: 'active',
+        }]);
+        }
 
     await supabase
       .from('invitations')
