@@ -128,11 +128,8 @@ export default function SignIn() {
         if (!session) return;
 
         const pendingToken = localStorage.getItem('pendingInviteToken');
-        console.log('=== oauth_callback handler ===');
-        console.log('pendingInviteToken in localStorage:', pendingToken);
 
         if (pendingToken) {
-          console.log('Invite token found — delegating to handleInviteFlow, skipping checkProfileAndRedirect');
           await handleInviteFlow(session);
           return;
         }
