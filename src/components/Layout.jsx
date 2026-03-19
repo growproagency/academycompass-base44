@@ -12,6 +12,7 @@ import {
   Archive,
   LayoutGrid,
   Shield,
+  ShieldCheck,
   Menu,
   LogOut,
 } from "lucide-react";
@@ -30,10 +31,15 @@ const adminItems = [
   { icon: Shield, label: "Admin Panel", path: "/AdminPanel" },
 ];
 
+const superAdminItems = [
+  { icon: ShieldCheck, label: "Super Admin", path: "/super-admin" },
+];
+
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const { user: authUser, profile } = useAuth();
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   const { data: myTaskCount = 0 } = useQuery({
     queryKey: ["tasks-my-count", profile?.id, profile?.organization_id],
@@ -51,6 +57,20 @@ export default function Layout() {
     initialData: 0,
     enabled: !!profile?.organization_id && !!profile?.id,
   });
+
+  // Check if current user is a super admin
+  useEffect(() => {
+    const checkSuperAdmin = async () => {
+      if (!authUser?.email) return;
+      const { data } = await supabase
+        .from("super_admins")
+        .select("email")
+        .eq("email", authUser.email)
+        .maybeSingle();
+      setIsSuperAdmin(!!data);
+    };
+    checkSuperAdmin();
+  }, [authUser?.email]);
 
   const isAdmin = profile?.role === "admin";
   const initials = profile?.full_name?.charAt(0)?.toUpperCase() || authUser?.email?.charAt(0)?.toUpperCase() || "U";
@@ -155,6 +175,19 @@ export default function Layout() {
                 </span>
               </div>
               {adminItems.map((item) => (
+                <NavItem key={item.path} item={item} />
+              ))}
+            </>
+          )}
+
+          {isSuperAdmin && (
+            <>
+              <div className="pt-5 pb-2 px-3">
+                <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: "#64748B" }}>
+                  Grow Pro
+                </span>
+              </div>
+              {superAdminItems.map((item) => (
                 <NavItem key={item.path} item={item} />
               ))}
             </>
